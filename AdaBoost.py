@@ -24,19 +24,23 @@ class AdaBoost(object):
                 model[attribute] = 0
         model[None] = 0
 
-        for i in xrange(self.maximum_iter):
-            h_max = None
-            e_max = 0.5
+        for t in xrange(self.maximum_iter):
+            D_sum_plus = sum(D[i] for i in xrange(m) if instances[i][1] > 0)
+            errors = {}
             for h in model.iterkeys():
-                e = 0
-                for d, (attributes, label) in itertools.izip(D, instances):
-                    predict = +1 if h in attributes else -1
-                    if label * predict < 0:
-                        e += d
+                errors[h] = D_sum_plus
+            for d, (attributes, label) in itertools.izip(D, instances):
+                d *= label
+                for h in attributes:
+                    errors[h] -= d
+            h_max = None
+            e_max = D_sum_plus
+            for h in model.iterkeys():
+                e = errors[h]
                 if abs(0.5-e) > abs(0.5-e_max):
-                    h_max = h
                     e_max = e
-            print >> sys.stderr, i, abs(0.5-e_max)
+                    h_max = h
+            print >> sys.stderr, t, abs(0.5-e_max)
             if abs(0.5-e_max) < 0.01:
                 break
             if e_max < 1e-10:
