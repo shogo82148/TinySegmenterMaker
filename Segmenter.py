@@ -3,37 +3,45 @@
 from AdaBoost import AdaBoost
 import re
 
-patterns = [
-    [re.compile(u'[一ニ三四五六七八九十百千万億兆]'), 'M'],
-    [re.compile(u'[一-龠々〆ヵヶ]'), 'H'],
-    [re.compile(u'[ぁ-ん]'), 'I'],
-    [re.compile(u'[ァ-ヴーｱ-ﾝﾞｰ]'), 'K'],
-    [re.compile(u'[a-zA-Zａ-ｚＡ-Ｚ]'), 'A'],
-    [re.compile(u'[0-9０-９]'), 'N'],
-]
+class Segmenter(object):
+    patterns = [
+        [re.compile(u'[一ニ三四五六七八九十百千万億兆]'), 'M'],
+        [re.compile(u'[一-龠々〆ヵヶ]'), 'H'],
+        [re.compile(u'[ぁ-ん]'), 'I'],
+        [re.compile(u'[ァ-ヴーｱ-ﾝﾞｰ]'), 'K'],
+        [re.compile(u'[a-zA-Zａ-ｚＡ-Ｚ]'), 'A'],
+        [re.compile(u'[0-9０-９]'), 'N'],
+        ]
 
-def getType(ch):
-    for pattern, sType in patterns:
-        if pattern.match(ch):
-            return sType
-    return 'O'
+    def __init__(self, learner = None):
+        self.learner = learner or AdaBoost()
 
-def addSentence(learner, sentence):
-    tags = ['U', 'U', 'U']
-    chars = ['B3', 'B2', 'B1']
-    types = ['O', 'O', 'O']
+    def getType(self, ch):
+        for pattern, sType in self.patterns:
+            if pattern.match(ch):
+                return sType
+        return 'O'
 
-    for word in sentence.split(' '):
-        tags.extend(['O'] * (len(word)-1) + ['B'])
-        for ch in word:
-            chars.append(ch.encode('utf-8'))
-            types.append(getType(ch))
+    def addSentence(self, sentence):
+        learner = self.learner
+        tags = ['U', 'U', 'U']
+        chars = ['B3', 'B2', 'B1']
+        types = ['O', 'O', 'O']
 
-    chars.extend(['E1', 'E2', 'E3'])
-    types.extend(['O', 'O', 'O'])
+        for word in sentence.split(' '):
+            tags.extend(['O'] * (len(word)-1) + ['B'])
+            for ch in word:
+                chars.append(ch.encode('utf-8'))
+                types.append(self.getType(ch))
 
-    for i in xrange(4, len(chars) - 3):
-        label = +1 if tags[i] == 'B' else -1
+        chars.extend(['E1', 'E2', 'E3'])
+        types.extend(['O', 'O', 'O'])
+
+        for i in xrange(4, len(chars) - 3):
+            label = +1 if tags[i] == 'B' else -1
+            learner.add_instance(self.getAttributes(i, tags, chars, types), label)
+
+    def getAttributes(self, i, tags, chars, types):
         w1 = chars[i-3]
         w2 = chars[i-2]
         w3 = chars[i-1]
@@ -85,4 +93,4 @@ def addSentence(learner, sentence):
                 'UQ2:' + p2 + c2,
                 'UQ3:' + p3 + c3,
                 ])
-        learner.add_instance(attributes, label)
+        return attributes

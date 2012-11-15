@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from AdaBoost import AdaBoost
-from Segmenter import addSentence
+from Segmenter import Segmenter
 import sys
 
 def main():
     in_file = sys.stdin
     out_file = sys.stdout
 
-    learner = AdaBoost()
+    s= Segmenter()
     for line in in_file:
         line = line.strip()
         line = line.decode('utf-8')
-        addSentence(learner, line)
-    learner.train()
-    learner.save(out_file)
+        s.addSentence(line)
+    s.learner.train()
+    s.learner.save(out_file)
 
 if __name__=='__main__':
     main()
