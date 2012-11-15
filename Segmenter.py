@@ -29,7 +29,7 @@ class Segmenter(object):
         types = ['O', 'O', 'O']
 
         for word in sentence.split(' '):
-            tags.extend(['O'] * (len(word)-1) + ['B'])
+            tags.extend(['B'] + ['O'] * (len(word)-1))
             for ch in word:
                 chars.append(ch.encode('utf-8'))
                 types.append(self.getType(ch))
@@ -40,6 +40,32 @@ class Segmenter(object):
         for i in xrange(4, len(chars) - 3):
             label = +1 if tags[i] == 'B' else -1
             learner.add_instance(self.getAttributes(i, tags, chars, types), label)
+
+    def parse(self, sentence):
+        learner = self.learner
+        tags = ['U', 'U', 'U', 'B']
+        chars = ['B3', 'B2', 'B1']
+        types = ['O', 'O', 'O']
+
+        for ch in sentence:
+            chars.append(ch.encode('utf-8'))
+            types.append(self.getType(ch))
+        chars.extend(['E1', 'E2', 'E3'])
+        types.extend(['O', 'O', 'O'])
+
+        result = []
+        word = chars[3]
+        for i in xrange(4, len(chars) - 3):
+            label = learner.predict(self.getAttributes(i, tags, chars, types))
+            if label >= 0:
+                result.append(word)
+                word = ''
+                tags.append('B')
+            else:
+                tags.append('O')
+            word += chars[i]
+        result.append(word)
+        return result
 
     def getAttributes(self, i, tags, chars, types):
         w1 = chars[i-3]

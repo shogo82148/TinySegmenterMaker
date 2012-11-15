@@ -71,6 +71,6 @@ class AdaBoost(object):
         for line in f:
             a = line.strip().split('\t')
             if len(a) == 1:
-                self.model[None] = float(a)
+                self.model[None] = float(a[0])
             else:
-                self.model[a[0]] = float(a)
+                self.model[a[0]] = float(a[1])
