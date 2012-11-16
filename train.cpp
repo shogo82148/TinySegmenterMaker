@@ -96,7 +96,6 @@ int main(int argc, char** argv) {
             for(unsigned int j = 0; j < hs.size(); ++j) {
                 errors[hs[j]] -= d;
             }
-            i++;
         }
 
         // select best classifier
