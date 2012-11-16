@@ -8,7 +8,7 @@ class AdaBoost(object):
     def __init__(self):
         self.instances = []
         self.threshold = 0.01
-        self.maximum_iter = 10000
+        self.maximum_iter = 100
         self.model = None
 
     def add_instance(self, attributes, label):
@@ -48,17 +48,24 @@ class AdaBoost(object):
             if e_max > 1 - 1e-10:
                 e_max = 1 - 1e-10
             a = 0.5 * math.log((1-e_max)/e_max)
-            D_new = [d * math.exp(-a * label * (+1 if h_max in attributes else -1))
+            a_exp = math.exp(a)
+            D_new = [d * a_exp if label * (+1 if h_max in attributes else -1) < 0 else d / a_exp
                      for d, (attributes, label) in itertools.izip(D, instances)]
             D_sum = sum(D_new)
             D = [d / D_sum for d in D_new]
             model[h_max] += a
+
+        bias = sum(model.itervalues())
+        for h in model.iterkeys():
+            model[h] *= 2
+        model[None] = -bias-model[None]
         self.model = model
 
     def predict(self, attributes):
-        score = 0
-        for h, a in self.model.iteritems():
-            score += a * (+1 if h in attributes else -1)
+        model = self.model
+        score = model[None]
+        for h in attributes:
+            score += model.get(h, 0)
         return +1 if score >= 0 else -1
 
     def save(self, f):

@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+from Segmenter import Segmenter
+import sys
+
+class Leaner(object):
+    def add_instance(self, attributes, label):
+        a = [str(label)] + list(attributes)
+        print '\t'.join(a)
+
+def main():
+    in_file = sys.stdin
+    out_file = sys.stdout
+
+    s= Segmenter(Leaner())
+    for line in in_file:
+        line = line.strip()
+        line = line.decode('utf-8')
+        s.addSentence(line)
+
+if __name__=='__main__':
+    main()
