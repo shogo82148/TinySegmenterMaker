@@ -129,10 +129,38 @@ int main(int argc, char** argv) {
     std::ofstream ofmodel(model_file);
     double bias = -model[0] * 2;
     for(unsigned int h = 1; h < num_features; ++h) {
-        const double a = model[h];
+        const double a = (model[h] *= 2);
         if(a == 0.0) continue;
-        ofmodel << features[h] << "\t" << (a*2) << std::endl;
+        ofmodel << features[h] << "\t" << a << std::endl;
         bias -= a;
     }
     ofmodel << bias << std::endl;
+
+    std::cerr << "Result:" << std::endl;
+    unsigned int pp = 0, pn = 0, np = 0, nn = 0;
+    for(unsigned int i = 0; i < num_instances; ++i) {
+        const int label = labels[i];
+        const std::vector<unsigned int> &hs = instances[i];
+        double score = bias;
+        for(unsigned int j = 0; j < hs.size(); ++j) {
+            score += model[hs[j]];
+        }
+        if(score >= 0) {
+            if(label > 0) {
+                ++pp;
+            } else {
+                ++pn;
+            }
+        } else {
+            if(label > 0) {
+                ++np;
+            } else {
+                ++nn;
+            }
+        }
+    }
+    std::cerr << "Accuracy: " << static_cast<double>(pp+nn)/num_instances*100 << "% (" << (pp+nn) << "/" << num_instances << ")" << std::endl;
+    std::cerr << "Precision: " << static_cast<double>(pp)/(pp+pn)*100 << "% (" << pp << "/" << (pp+pn) << ")" << std::endl;
+    std::cerr << "Recall: " << static_cast<double>(pp)/(pp+np)*100 << "% (" << pp << "/" << (pp+np) << ")" << std::endl;
+    std::cerr << "System/Answer p/p p/n n/p n/n: " << pp << " " << pn << " " << np << " " << nn << std::endl;
 }
