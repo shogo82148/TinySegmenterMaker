@@ -35,7 +35,9 @@ class Segmenter(object):
             for ch in word:
                 chars.append(ch.encode('utf-8'))
                 types.append(self.getType(ch))
-        tags[4] = 'U'
+        if len(tags) < 4:
+            return
+        tags[3] = 'U'
 
         chars.extend(['E1', 'E2', 'E3'])
         types.extend(['O', 'O', 'O'])
