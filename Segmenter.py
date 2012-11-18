@@ -23,6 +23,8 @@ class Segmenter(object):
         return 'O'
 
     def addSentence(self, sentence):
+        if not sentence:
+            return
         learner = self.learner
         tags = ['U', 'U', 'U']
         chars = ['B3', 'B2', 'B1']
@@ -33,6 +35,7 @@ class Segmenter(object):
             for ch in word:
                 chars.append(ch.encode('utf-8'))
                 types.append(self.getType(ch))
+        tags[4] = 'U'
 
         chars.extend(['E1', 'E2', 'E3'])
         types.extend(['O', 'O', 'O'])
@@ -42,8 +45,10 @@ class Segmenter(object):
             learner.add_instance(self.getAttributes(i, tags, chars, types), label)
 
     def parse(self, sentence):
+        if not sentence:
+            return []
         learner = self.learner
-        tags = ['U', 'U', 'U', 'B']
+        tags = ['U', 'U', 'U', 'U']
         chars = ['B3', 'B2', 'B1']
         types = ['O', 'O', 'O']
 
@@ -118,5 +123,13 @@ class Segmenter(object):
                 'UQ1:' + p1 + c1,
                 'UQ2:' + p2 + c2,
                 'UQ3:' + p3 + c3,
+                'BQ1:' + p2 + c2 + c3,
+                'BQ2:' + p2 + c3 + c4,
+                'BQ3:' + p3 + c2 + c3,
+                'BQ4:' + p3 + c3 + c4,
+                'TQ1:' + p2 + c1 + c2 + c3,
+                'TQ2:' + p2 + c2 + c3 + c4,
+                'TQ3:' + p3 + c1 + c2 + c3,
+                'TQ4:' + p3 + c2 + c3 + c4,
                 ])
         return attributes

@@ -187,7 +187,7 @@ public:
                 m[""] = std::atof(h.c_str());
             }
         }
-        m[""] = m[""]*2 + bias;
+        m[""] = -m[""]*2 - bias;
 
         features.resize(0);
         features.reserve(m.size());
