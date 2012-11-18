@@ -7,6 +7,8 @@
 #include <cmath>
 #include <algorithm>
 #include <set>
+#include <cstdlib>
+#include <unistd.h>
 
 class AdaBoost {
 private:
@@ -19,6 +21,13 @@ private:
     double bias;
 
 public:
+    double threshold;
+    unsigned int numIteration;
+
+    AdaBoost() {
+        threshold = 0.01;
+        numIteration = 100;
+    }
 
     void initializeFeatures(const char* instances_file) {
         std::set<std::string> S;
@@ -82,7 +91,7 @@ public:
         double a = 0;
         double a_exp = 1;
 
-        for(int t = 0; t < 100000; ++t) {
+        for(int t = 0; t < numIteration; ++t) {
             // update & calculate errors
             double D_sum = 0.0;
             double D_sum_plus = 0.0;
@@ -116,7 +125,7 @@ public:
                 }
             }
             std::cerr << t << "\t" << std::abs(0.5-e_best) << "\r";
-            if(std::abs(0.5-e_best)<0.0001) break;
+            if(std::abs(0.5-e_best)<threshold) break;
             if(e_best<1e-10) e_best = 1e-10;
             if(e_best>1-1e-10) e_best = 1-1e-10;
 
@@ -179,10 +188,28 @@ public:
 };
 
 int main(int argc, char** argv) {
-    const char* instances_file = argv[1];
-    const char* model_file = argv[2];
-
+    // Parse arg
+    int c;
     AdaBoost t;
+    while((c=getopt(argc, argv, "t:n:"))!=-1) {
+        switch (c) {
+        case 't':
+            t.threshold = std::atof(optarg);
+            break;
+        case 'n':
+            t.numIteration = std::atoi(optarg);
+            break;
+        }
+    }
+
+    if(optind+1>=argc) {
+        std::cerr << "Usage: " << argv[0] << " [-t threshold] [-n number-of-iteration] instances_file model_file" << std::endl;
+        return -1;
+    }
+
+    const char* instances_file = argv[optind];
+    const char* model_file = argv[optind+1];
+
     t.initializeFeatures(instances_file);
     t.initializeInstances(instances_file);
     t.train();
