@@ -18,7 +18,6 @@ private:
     std::vector<std::vector<unsigned int> > instances;
     std::vector<signed char> labels;
     unsigned int num_instances;
-    double bias;
 
 public:
     double threshold;
@@ -33,6 +32,7 @@ public:
         std::set<std::string> S;
         std::ifstream ifinstances(instances_file);
         std::string line;
+        num_instances = 0;
         while(ifinstances && getline(ifinstances, line)) {
             std::istringstream is(line);
             std::string h;
@@ -142,20 +142,30 @@ public:
         std::cerr << std::endl;
     }
 
-    void saveModel(const char* model_file) {
+    void saveModel(const char* model_file) const {
         const unsigned int num_features = features.size();
         std::ofstream ofmodel(model_file);
-        bias = -model[0] * 2;
+        double bias = -model[0];
         for(unsigned int h = 1; h < num_features; ++h) {
-            const double a = (model[h] *= 2);
+            const double a = model[h];
             if(a == 0.0) continue;
-            ofmodel << features[h] << "\t" << a << std::endl;
+            ofmodel << features[h] << "\t" << (a*2) << std::endl;
             bias -= a;
         }
         ofmodel << bias << std::endl;
     }
 
-    void showResult() {
+    double getBias() const {
+        double bias = 0.0;
+        const unsigned int num_features = features.size();
+        for(unsigned int h = 0; h < num_features; ++h) {
+            bias -= model[h];
+        }
+        return bias;
+    }
+
+    void showResult() const {
+        const double bias = getBias();
         const unsigned int num_features = features.size();
         std::cerr << "Result:" << std::endl;
         unsigned int pp = 0, pn = 0, np = 0, nn = 0;
