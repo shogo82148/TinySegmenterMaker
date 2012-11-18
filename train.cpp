@@ -29,7 +29,7 @@ public:
     }
 
     void initializeFeatures(const char* instances_file) {
-        std::set<std::string> S;
+        std::map<std::string, double> m;
         std::ifstream ifinstances(instances_file);
         std::string line;
         num_instances = 0;
@@ -39,7 +39,7 @@ public:
             int label;
             is >> label;
             while(is >> h) {
-                S.insert(h);
+                m[h] = 0.0;
             }
             ++num_instances;
             if(num_instances % 1000 == 0) {
@@ -47,36 +47,49 @@ public:
             }
         }
         std::cerr << "finding instances...: " << num_instances << " instances found\n";
-        S.insert("");
+        m[""] = 0.0;
 
+        for(unsigned int h = 0; h < features.size(); ++h) {
+            m[features[h]] = model[h];
+        }
+
+        D.resize(0);
         D.reserve(num_instances);
+        labels.resize(0);
         labels.reserve(num_instances);
+        instances.resize(0);
         instances.reserve(num_instances);
-        features.reserve(S.size());
-        model.reserve(S.size());
-        for(std::set<std::string>::iterator it = S.begin(); it != S.end(); ++it) {
-            features.push_back(*it);
-            model.push_back(0.0);
+        features.resize(0);
+        features.reserve(m.size());
+        model.resize(0);
+        model.reserve(m.size());
+        for(std::map<std::string, double>::iterator it = m.begin(); it != m.end(); ++it) {
+            features.push_back(it->first);
+            model.push_back(it->second);
         }
     }
 
     void initializeInstances(const char* instances_file) {
         std::ifstream ifinstances(instances_file);
         std::string line;
+        const double bias = getBias();
         while(ifinstances && getline(ifinstances, line)) {
             std::istringstream is(line);
             std::string h;
             std::vector<unsigned int> v;
             int label;
+            double score = bias;
             is >> label;
             labels.push_back(label);
             while(is >> h) {
                 std::vector<std::string>::iterator it = std::lower_bound(features.begin(), features.end(), h);
-                v.push_back(it - features.begin());
+                const unsigned int index = it - features.begin();
+                v.push_back(index);
+                score += model[index];
             }
             std::sort(v.begin(), v.end());
             instances.push_back(v);
-            D.push_back(1.0);
+            D.push_back(std::exp(-label*score*2));
             if(D.size() % 1000 == 0)
                 std::cerr << "loading instances...: " << D.size() << "/" << num_instances << " instances loaded\r";
         }
@@ -146,13 +159,44 @@ public:
         const unsigned int num_features = features.size();
         std::ofstream ofmodel(model_file);
         double bias = -model[0];
+        ofmodel.precision(20);
         for(unsigned int h = 1; h < num_features; ++h) {
             const double a = model[h];
             if(a == 0.0) continue;
-            ofmodel << features[h] << "\t" << (a*2) << std::endl;
+            ofmodel << features[h] << "\t" << a << std::endl;
             bias -= a;
         }
-        ofmodel << bias << std::endl;
+        ofmodel << bias/2 << std::endl;
+    }
+
+    void loadModel(const char* model_file) {
+        std::ifstream ifmodel(model_file);
+        std::string line;
+        std::map<std::string, double> m;
+        double bias = 0.0;
+        m[""] = 0.0;
+        while(ifmodel && getline(ifmodel, line)) {
+            std::istringstream is(line);
+            std::string h;
+            double value;
+            is >> h;
+            if(is >> value) {
+                m[h] = value;
+                bias += value;
+            } else {
+                m[""] = std::atof(h.c_str());
+            }
+        }
+        m[""] = m[""]*2 + bias;
+
+        features.resize(0);
+        features.reserve(m.size());
+        model.resize(0);
+        model.reserve(m.size());
+        for(std::map<std::string, double>::iterator it = m.begin(); it != m.end(); ++it) {
+            features.push_back(it->first);
+            model.push_back(it->second);
+        }
     }
 
     double getBias() const {
@@ -161,7 +205,7 @@ public:
         for(unsigned int h = 0; h < num_features; ++h) {
             bias -= model[h];
         }
-        return bias;
+        return bias / 2;
     }
 
     void showResult() const {
@@ -201,13 +245,16 @@ int main(int argc, char** argv) {
     // Parse arg
     int c;
     AdaBoost t;
-    while((c=getopt(argc, argv, "t:n:"))!=-1) {
+    while((c=getopt(argc, argv, "t:n:M:"))!=-1) {
         switch (c) {
         case 't':
             t.threshold = std::atof(optarg);
             break;
         case 'n':
             t.numIteration = std::atoi(optarg);
+            break;
+        case 'M':
+            t.loadModel(optarg);
             break;
         }
     }
