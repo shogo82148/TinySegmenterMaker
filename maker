@@ -61,6 +61,23 @@ class javascript(object):
         template = template.replace('__MODEL__', javascript.tostr(model))
         return template
 
+@language('python', 'py')
+def python(model):
+    def tostr(obj):
+        items = []
+        for key, value in obj.iteritems():
+            if isinstance(value, dict):
+                value = tostr(value)
+            key = key.replace("'", "\\'")
+            key = "u'" + key + "'"
+            items.append(key + ':' + str(value))
+        items.sort()
+        return '{' + ','.join(items) + '}'
+
+    template = open('templates/python.py').read()
+    template = template.replace('__MODEL__', tostr(model))
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",
