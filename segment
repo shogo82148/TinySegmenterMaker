@@ -6,15 +6,13 @@ import sys
 
 def main():
     model = sys.argv[1]
-    in_file = sys.stdin
-    out_file = sys.stdout
 
     s = Segmenter()
     s.learner.load(open(model))
-    for line in in_file:
+    for line in iter(sys.stdin.readline, ""):
         line = line.strip()
         line = line.decode('utf-8')
-        out_file.write(' '.join(s.parse(line)) + '\n')
+        print ' '.join(s.parse(line))
 
 if __name__=='__main__':
     main()
