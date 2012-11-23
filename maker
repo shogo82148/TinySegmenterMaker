@@ -99,6 +99,27 @@ def perl(model):
     template = template.replace('__MODEL__', model_str)
     return template
 
+@language('ruby', 'rb')
+def ruby(model):
+    def tostr(obj):
+        items = []
+        for key, value in obj.iteritems():
+            key = key.replace("'", "\\'")
+            key = "'" + key + "'"
+            items.append(key + '=>' + str(value))
+        items.sort()
+        return '{' + ','.join(items) + '}'
+
+    model_str = ''
+    for key, value in model.iteritems():
+        if key == 'BIAS':
+            model_str += 'BIAS = ' + str(value) + ';\n'
+        else:
+            model_str += key + ' = ' + tostr(value) + ';\n'
+    template = open('templates/ruby.rb').read()
+    template = template.replace('__MODEL__', model_str)
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",
