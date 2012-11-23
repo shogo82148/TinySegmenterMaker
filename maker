@@ -5,9 +5,22 @@ import re
 import sys
 from optparse import OptionParser
 
+categories = frozenset(['UP1', 'UP2', 'UP3',
+              'BP1', 'BP2',
+              'UW1', 'UW2', 'UW3', 'UW4', 'UW5', 'UW6',
+              'BW1', 'BW2', 'BW3',
+              'TW1', 'TW2', 'TW3', 'TW4',
+              'UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6',
+              'BC1', 'BC2', 'BC3',
+              'TC1', 'TC2', 'TC3', 'TC4',
+              'UQ1', 'UQ2', 'UQ3',
+              'BQ1', 'BQ2', 'BQ3', 'BQ4',
+              'TQ1', 'TQ2', 'TQ3', 'TQ4',
+])
 re_key = re.compile('([a-zA-Z0-9]*):(.*)')
 def load(f, scale = 10000):
-    model = {}
+    model = dict([category, {}] for category in categories)
+    model['BIAS'] = 0
     for line in f:
         a = line.strip().split('\t')
         if len(a) == 2:
@@ -15,10 +28,9 @@ def load(f, scale = 10000):
             category = m.group(1)
             key = m.group(2)
             value = int(float(a[1]) * scale + 0.5)
-            if category not in model:
-                model[category] = {key: value}
-            else:
-                model[category][key] = value
+            if category not in categories:
+                continue
+            model[category][key] = value
         else:
             model['BIAS'] = int(float(a[0]) * scale + 0.5)
     return model
@@ -117,6 +129,47 @@ def ruby(model):
         else:
             model_str += key + ' = ' + tostr(value) + ';\n'
     template = open('templates/ruby.rb').read()
+    template = template.replace('__MODEL__', model_str)
+    return template
+
+@language('cpp', 'hpp')
+def cpp(model):
+    def ch2label(ch):
+        if 'a' <= ch <='z' or 'A' <= ch <= 'Z' or '0' <= ch <= '9':
+            return "'" + ch + "'"
+        else:
+            return "'\\x" + hex(ord(ch))[2:] + "'"
+    def tostr(obj, pos = 0):
+        if len(obj) == 1:
+            key, value = obj.items()[0]
+            conditions = ['s[' + str(i) + ']==' + ch2label(ch) for i, ch in enumerate(key)][pos:]
+            if len(conditions)==0:
+                return 'return ' + str(value) + ';'
+            else:
+                return 'if(s.size()==' + str(len(key)) + '&&' + '&&'.join(conditions) + ')' + \
+                    'return ' + str(value) + ';else return 0;'
+        cases = {}
+        for key, value in obj.iteritems():
+            ch = key[pos]
+            if ch in cases:
+                cases[ch][key] = value
+            else:
+                cases[ch] = {key: value}
+        ret = 'if(s.size()<=' + str(pos) + ')return 0;'
+        ret += 'switch(s[' + str(pos) + ']){'
+        for ch, o in cases.iteritems():
+            ret += 'case ' + ch2label(ch) + ':'
+            ret += tostr(o, pos + 1)
+        ret += 'default:return 0;}'
+        return ret
+
+    model_str = ''
+    for key, value in model.iteritems():
+        if key == 'BIAS':
+            model_str += 'int BIAS() const {return ' + str(value) + ';}\n'
+        else:
+            model_str += 'int ' + key + '(const std::string &s) const { ' + tostr(value) + '}\n'
+    template = open('templates/cpp.hpp').read()
     template = template.replace('__MODEL__', model_str)
     return template
 
