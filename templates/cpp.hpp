@@ -20,7 +20,7 @@ protected:
         return 0;
     }
 
-    static std::string ctype_(const std::string& ch) {
+    static const char* ctype_(const std::string& ch) {
         // [一二三四五六七八九十百千万億兆]
         if(ch.size() == 3 && (
                ch[0] == '\xe4' && (
@@ -59,11 +59,18 @@ protected:
 
         return "O";
     }
-public:
-    std::vector<std::string> segment(const std::string& s) const {
-        if(s.empty()) return std::vector<std::string>();
 
-        std::vector<std::string> result, ctype, seg;
+    std::vector<std::string> result, ctype, seg;
+    std::string word;
+    std::string tmp;
+
+public:
+    std::vector<std::string> segment(const std::string& s) {
+        if(s.empty()) return std::vector<std::string>();
+        result.resize(0);
+        ctype.resize(0);
+        seg.resize(0);
+
         seg.push_back("B3"); ctype.push_back("O");
         seg.push_back("B2"); ctype.push_back("O");
         seg.push_back("B1"); ctype.push_back("O");
@@ -79,7 +86,7 @@ public:
         seg.push_back("E2"); ctype.push_back("O");
         seg.push_back("E3"); ctype.push_back("O");
 
-        std::string word = seg[3];
+        word = seg[3];
         std::string p1 = "U", p2 = "U", p3 = "U";
 
         for(unsigned int i = 4; i<seg.size()-3; ++i) {
@@ -99,45 +106,45 @@ public:
             score += UP1(p1);
             score += UP2(p2);
             score += UP3(p3);
-            score += BP1(p1 + p2);
-            score += BP2(p2 + p3);
+            tmp = p1; tmp += p2; score += BP1(tmp);
+            tmp = p2; tmp += p3; score += BP2(tmp);
             score += UW1(w1);
             score += UW2(w2);
             score += UW3(w3);
             score += UW4(w4);
             score += UW5(w5);
             score += UW6(w6);
-            score += BW1(w2 + w3);
-            score += BW2(w3 + w4);
-            score += BW3(w4 + w5);
-            score += TW1(w1 + w2 + w3);
-            score += TW2(w2 + w3 + w4);
-            score += TW3(w3 + w4 + w5);
-            score += TW4(w4 + w5 + w6);
+            tmp = w1; tmp += w2; tmp += w3; score += TW1(tmp);
+            tmp = w2; tmp += w3; score += BW1(tmp);
+            tmp += w4; score += TW2(tmp);
+            tmp = w3; tmp += w4; score += BW2(tmp);
+            tmp += w5; score += TW3(tmp);
+            tmp = w4; tmp += w5; score += BW3(tmp);
+            tmp += w6; score += TW4(tmp);
             score += UC1(c1);
             score += UC2(c2);
             score += UC3(c3);
             score += UC4(c4);
             score += UC5(c5);
             score += UC6(c6);
-            score += BC1(c2 + c3);
-            score += BC2(c3 + c4);
-            score += BC3(c4 + c5);
-            score += TC1(c1 + c2 + c3);
-            score += TC2(c2 + c3 + c4);
-            score += TC3(c3 + c4 + c5);
-            score += TC4(c4 + c5 + c6);
-            score += UQ1(p1 + c1);
-            score += UQ2(p2 + c2);
-            score += UQ3(p3 + c3);
-            score += BQ1(p2 + c2 + c3);
-            score += BQ2(p2 + c3 + c4);
-            score += BQ3(p3 + c2 + c3);
-            score += BQ4(p3 + c3 + c4);
-            score += TQ1(p2 + c1 + c2 + c3);
-            score += TQ2(p2 + c2 + c3 + c4);
-            score += TQ3(p3 + c1 + c2 + c3);
-            score += TQ4(p3 + c2 + c3 + c4);
+            tmp = c1; tmp += c2; tmp += c3; score += TC1(tmp);
+            tmp = c2; tmp += c3; score += BC1(tmp);
+            tmp += c4; score += TC2(tmp);
+            tmp = c3; tmp += c4; score += BC2(tmp);
+            tmp += c5; score += TC3(tmp);
+            tmp = c4; tmp += c5; score += BC3(tmp);
+            tmp += c6; score += TC4(tmp);
+            tmp = p1; tmp += c1; score += UQ1(tmp);
+            tmp = p2; tmp += c2; score += UQ2(tmp);
+            tmp += c3; score += BQ1(tmp);
+            tmp += c4; score += TQ2(tmp);
+            tmp = p3; tmp += c3; score += UQ3(tmp);
+            tmp += c4; score += BQ4(tmp);
+            tmp = p2; tmp += c3; tmp += c4; score += BQ2(tmp);
+            tmp = p3; tmp += c2; tmp += c3; score += BQ3(tmp);
+            tmp += c4; score += TQ4(tmp);
+            tmp = p2; tmp += c1; tmp += c2; tmp += c3; score += TQ1(tmp);
+            tmp = p3; tmp += c1; tmp += c2; tmp += c3; score += TQ3(tmp);
             std::string p = "O";
             if(score > 0) {
                 result.push_back(word);
@@ -147,7 +154,7 @@ public:
             p1 = p2;
             p2 = p3;
             p3 = p;
-            word = word + seg[i];
+            word += seg[i];
         }
         result.push_back(word);
         return result;
