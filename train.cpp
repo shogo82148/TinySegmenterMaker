@@ -9,6 +9,8 @@
 #include <set>
 #include <cstdlib>
 #include <unistd.h>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
 
 static volatile sig_atomic_t eflag = 0;
 
@@ -29,13 +31,82 @@ private:
     std::vector<signed char> labels;
     unsigned int num_instances;
 
+    class Task {
+    private:
+        const std::vector<std::vector<unsigned int> > & instances_;
+        const std::vector<signed char> & labels_;
+        std::vector<double> & D_;
+        unsigned int numThreads;
+        unsigned int no;
+        boost::thread thread;
+        double a_exp;
+        unsigned int h_best;
+
+        void run() {
+            const std::vector<std::vector<unsigned int> > & instances = instances_;
+            const std::vector<signed char> & labels = labels_;
+            std::vector<double> & D = D_;
+            const unsigned int num_instances = instances.size();
+
+            D_sum = 0.0;
+            D_sum_plus = 0.0;
+            std::fill(errors.begin(), errors.end(), 0.0);
+            for(unsigned int i = no; i < num_instances; i+=numThreads) {
+                const int label = labels[i];
+                const std::vector<unsigned int> &hs = instances[i];
+                const std::vector<unsigned int>::const_iterator it = std::lower_bound(hs.begin(), hs.end(), h_best);
+                const int prediction = (it==hs.end() || *it != h_best) ? -1 : +1;
+                if(label * prediction < 0) {
+                    D[i] *= a_exp;
+                } else {
+                    D[i] /= a_exp;
+                }
+                D_sum += D[i];
+                if(label > 0) D_sum_plus += D[i];
+                const double d = D[i] * label;
+                for(unsigned int j = 0; j < hs.size(); ++j) {
+                    errors[hs[j]] -= d;
+                }
+            }
+        }
+
+    public:
+        std::vector<double> errors;
+        double D_sum;
+        double D_sum_plus;
+
+        Task(const std::vector<std::vector<unsigned int> > & instances,
+             const std::vector<signed char> & labels,
+             std::vector<double> D,
+             unsigned int num_instances,
+             unsigned int no,
+             unsigned int numThreads):
+            instances_(instances), labels_(labels), D_(D), errors(num_instances) {
+
+            this->numThreads = numThreads;
+            this->no = no;
+        }
+
+        void start(unsigned int h_best, double a_exp) {
+            this->h_best = h_best;
+            this->a_exp = a_exp;
+            thread = boost::thread(boost::bind(&Task::run, this));
+        }
+
+        void join() {
+            thread.join();
+        }
+    };
+
 public:
     double threshold;
     unsigned int numIteration;
+    unsigned int numThreads;
 
     AdaBoost() {
         threshold = 0.01;
         numIteration = 100;
+        numThreads = 1;
     }
 
     void initializeFeatures(const char* instances_file) {
@@ -113,27 +184,26 @@ public:
         double e_best = 0.5;
         double a = 0;
         double a_exp = 1;
+        std::vector<Task*> tasks;
+
+        for(int i = 0; i < numThreads; ++i) {
+            tasks.push_back(new Task(instances, labels, D, num_features, i, numThreads));
+        }
 
         for(int t = 0; eflag && t < numIteration; ++t) {
             // update & calculate errors
             double D_sum = 0.0;
             double D_sum_plus = 0.0;
             std::fill(errors.begin(), errors.end(), 0.0);
-            for(unsigned int i = 0; i < num_instances; ++i) {
-                const int label = labels[i];
-                const std::vector<unsigned int> &hs = instances[i];
-                const std::vector<unsigned int>::const_iterator it = std::lower_bound(hs.begin(), hs.end(), h_best);
-                const int prediction = (it==hs.end() || *it != h_best) ? -1 : +1;
-                if(label * prediction < 0) {
-                    D[i] *= a_exp;
-                } else {
-                    D[i] /= a_exp;
-                }
-                D_sum += D[i];
-                if(label > 0) D_sum_plus += D[i];
-                const double d = D[i] * label;
-                for(unsigned int j = 0; j < hs.size(); ++j) {
-                    errors[hs[j]] -= d;
+            for(int i = 0; i < numThreads; ++i) {
+                tasks[i]->start(h_best, a_exp);
+            }
+            for(int i = 0; i < numThreads; ++i) {
+                tasks[i]->join();
+                D_sum += tasks[i]->D_sum;
+                D_sum_plus += tasks[i]->D_sum_plus;
+                for(unsigned int h = 1; h < num_features; ++h) {
+                    errors[h] += tasks[i]->errors[h];
                 }
             }
 
@@ -162,6 +232,11 @@ public:
                 D[i] /= D_sum;
             }
         }
+
+        for(int i = 0; i < numThreads; ++i) {
+            delete tasks[i];
+        }
+
         std::cerr << std::endl;
     }
 
@@ -260,7 +335,7 @@ int main(int argc, char** argv) {
     // Parse arg
     int c;
     AdaBoost t;
-    while((c=getopt(argc, argv, "t:n:M:"))!=-1) {
+    while((c=getopt(argc, argv, "t:n:M:m:"))!=-1) {
         switch (c) {
         case 't':
             t.threshold = std::atof(optarg);
@@ -270,6 +345,9 @@ int main(int argc, char** argv) {
             break;
         case 'M':
             t.loadModel(optarg);
+            break;
+        case 'm':
+            t.numThreads = std::atoi(optarg);
             break;
         }
     }
