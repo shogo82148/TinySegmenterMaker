@@ -1,0 +1,209 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+import re
+import sys
+from optparse import OptionParser
+
+categories = frozenset(['UP1', 'UP2', 'UP3',
+              'BP1', 'BP2',
+              'UW1', 'UW2', 'UW3', 'UW4', 'UW5', 'UW6',
+              'BW1', 'BW2', 'BW3',
+              'TW1', 'TW2', 'TW3', 'TW4',
+              'UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6',
+              'BC1', 'BC2', 'BC3',
+              'TC1', 'TC2', 'TC3', 'TC4',
+              'UQ1', 'UQ2', 'UQ3',
+              'BQ1', 'BQ2', 'BQ3', 'BQ4',
+              'TQ1', 'TQ2', 'TQ3', 'TQ4',
+])
+re_key = re.compile('([a-zA-Z0-9]*):(.*)')
+def load(f, scale = 10000):
+    model = dict([category, {}] for category in categories)
+    model['BIAS'] = 0
+    for line in f:
+        a = line.strip().split('\t')
+        if len(a) == 2:
+            m = re_key.match(a[0])
+            category = m.group(1)
+            key = m.group(2)
+            value = int(float(a[1]) * scale + 0.5)
+            if category not in categories:
+                continue
+            model[category][key] = value
+        else:
+            model['BIAS'] = int(float(a[0]) * scale + 0.5)
+    return model
+
+languages = {}
+class language(object):
+    def __init__(self, name, ext):
+        self.name = name
+        self.ext = ext
+        self.execute = None
+
+    def __call__(self, func):
+        languages[self.name] = self
+        self.execute = func
+        return func
+
+class javascript(object):
+    @classmethod
+    def tostr(cls, obj):
+        items = []
+        for key, value in obj.iteritems():
+            if isinstance(value, dict):
+                value = cls.tostr(value)
+            if not re.match('[a-zA-Z0-9]+', key):
+                key = key.replace("'", "\\'")
+                key = "'" + key + "'"
+            items.append(key + ':' + str(value))
+        items.sort()
+        return '{' + ','.join(items) + '}'
+
+    @language('javascript', 'js')
+    def original(model):
+        template = open('templates/javascript.js').read()
+        template = template.replace('__MODEL__', javascript.tostr(model))
+        return template
+
+    @language('javascriptdp', 'dp.js')
+    def dp(model):
+        template = open('templates/javascript.dp.js').read()
+        template = template.replace('__MODEL__', javascript.tostr(model))
+        return template
+
+@language('python', 'py')
+def python(model):
+    def tostr(obj):
+        items = []
+        for key, value in obj.iteritems():
+            if isinstance(value, dict):
+                value = tostr(value)
+            key = key.replace("'", "\\'")
+            key = "u'" + key + "'"
+            items.append(key + ':' + str(value))
+        items.sort()
+        return '{' + ','.join(items) + '}'
+
+    template = open('templates/python.py').read()
+    template = template.replace('__MODEL__', tostr(model))
+    return template
+
+@language('perl', 'pm')
+def perl(model):
+    def tostr(obj):
+        items = []
+        for key, value in obj.iteritems():
+            key = key.replace("'", "\\'")
+            key = "'" + key + "'"
+            items.append(key + '=>' + str(value))
+        items.sort()
+        return '(' + ','.join(items) + ')'
+
+    model_str = ''
+    for key, value in model.iteritems():
+        if key == 'BIAS':
+            model_str += 'my $BIAS = ' + str(value) + ';\n'
+        else:
+            model_str += 'my %' + key + ' = ' + tostr(value) + ';\n'
+    template = open('templates/perl.pl').read()
+    template = template.replace('__MODEL__', model_str)
+    return template
+
+@language('ruby', 'rb')
+def ruby(model):
+    def tostr(obj):
+        items = []
+        for key, value in obj.iteritems():
+            key = key.replace("'", "\\'")
+            key = "'" + key + "'"
+            items.append(key + '=>' + str(value))
+        items.sort()
+        return '{' + ','.join(items) + '}'
+
+    model_str = ''
+    for key, value in model.iteritems():
+        if key == 'BIAS':
+            model_str += 'BIAS = ' + str(value) + ';\n'
+        else:
+            model_str += key + ' = ' + tostr(value) + ';\n'
+    template = open('templates/ruby.rb').read()
+    template = template.replace('__MODEL__', model_str)
+    return template
+
+@language('cpp', 'hpp')
+def cpp(model):
+    def ch2label(ch):
+        if 'a' <= ch <='z' or 'A' <= ch <= 'Z' or '0' <= ch <= '9':
+            return "'" + ch + "'"
+        else:
+            return "'\\x" + hex(ord(ch))[2:] + "'"
+    def tostr(obj, pos = 0):
+        if len(obj) == 1:
+            key, value = obj.items()[0]
+            conditions = ['s[' + str(i) + ']==' + ch2label(ch) for i, ch in enumerate(key)][pos:]
+            if len(conditions)==0:
+                return 'return ' + str(value) + ';'
+            else:
+                return 'if(s.size()==' + str(len(key)) + '&&' + '&&'.join(conditions) + ')' + \
+                    'return ' + str(value) + ';else return 0;'
+        cases = {}
+        for key, value in obj.iteritems():
+            ch = key[pos]
+            if ch in cases:
+                cases[ch][key] = value
+            else:
+                cases[ch] = {key: value}
+        ret = 'if(s.size()<=' + str(pos) + ')return 0;'
+        ret += 'switch(s[' + str(pos) + ']){'
+        for ch, o in cases.iteritems():
+            ret += 'case ' + ch2label(ch) + ':'
+            ret += tostr(o, pos + 1)
+        ret += 'default:return 0;}'
+        return ret
+
+    model_str = ''
+    for key, value in model.iteritems():
+        if key == 'BIAS':
+            model_str += 'int BIAS() const {return ' + str(value) + ';}\n'
+        else:
+            model_str += 'int ' + key + '(const std::string &s) const { ' + tostr(value) + '}\n'
+    template = open('templates/cpp.hpp').read()
+    template = template.replace('__MODEL__', model_str)
+    return template
+
+def main():
+    parser = OptionParser()
+    parser.add_option("-s", "--scale", dest = "scale",
+                      default = 0, type = "int",
+                      help="The scale of parameters")
+    parser.add_option("-d", "--dir", dest = "dir",
+                      default = '.',
+                      help="output directory")
+    parser.add_option("-o", "--output", dest = "output",
+                      default = '',
+                      help="output filename")
+    parser.add_option("-m", "--model", dest = "model",
+                      default = '',
+                      help="model filename")
+    (options, args) = parser.parse_args()
+    if options.model:
+        model = load(open(options.model))
+    else:
+        model = load(sys.stdin)
+    lang = args[0]
+    if lang == 'all':
+        for maker in languages.itervalues():
+            with open(options.dir + '/tinysegmenter.' + maker.ext, 'w') as f:
+                f.write(maker.execute(model))
+    elif lang in languages:
+        maker = languages[lang]
+        filename = options.output or options.dir + '/tinysegmenter.' + maker.ext
+        with open(filename, 'w') as f:
+            f.write(maker.execute(model))
+    else:
+        print >>sys.stderr, "Unknow language:", lang
+
+if __name__ == "__main__":
+    main()
