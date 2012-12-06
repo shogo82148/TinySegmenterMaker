@@ -150,7 +150,6 @@ public:
         instances.reserve(num_instances);
         instances_buf.resize(0);
         instances_buf.reserve(buf_size);
-        std::cout << std::endl << '"' << instances_buf.capacity() << '"' << std::endl;
         features.resize(0);
         features.reserve(m.size());
         model.resize(0);
@@ -192,7 +191,6 @@ public:
 
     void train() {
         const unsigned int num_features = features.size();
-        std::vector<double> errors(num_features);
         unsigned int h_best = 0;
         double e_best = 0.5;
         double a = 0;
@@ -207,7 +205,6 @@ public:
             // update & calculate errors
             double D_sum = 0.0;
             double D_sum_plus = 0.0;
-            std::fill(errors.begin(), errors.end(), 0.0);
             for(int i = 0; i < numThreads; ++i) {
                 tasks[i]->start(h_best, a_exp);
             }
@@ -215,16 +212,17 @@ public:
                 tasks[i]->join();
                 D_sum += tasks[i]->D_sum;
                 D_sum_plus += tasks[i]->D_sum_plus;
-                for(unsigned int h = 1; h < num_features; ++h) {
-                    errors[h] += tasks[i]->errors[h];
-                }
             }
 
             // select best classifier
             e_best = D_sum_plus / D_sum;
             h_best = 0;
             for(unsigned int h = 1; h < num_features; ++h) {
-                const double e = (errors[h] + D_sum_plus) / D_sum;
+                double e = 0;
+                for(unsigned int i = 0; i < numThreads; ++i) {
+                    e += tasks[i]->errors[h];
+                }
+                e = (e + D_sum_plus) / D_sum;
                 if(std::abs(0.5-e) > std::abs(0.5-e_best)) {
                     h_best = h;
                     e_best = e;
