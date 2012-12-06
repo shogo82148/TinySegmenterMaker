@@ -24,16 +24,21 @@ static void handler(int signum) {
 
 class AdaBoost {
 private:
+    struct Range {
+        std::vector<unsigned int>::iterator begin;
+        std::vector<unsigned int>::iterator end;
+    };
     std::vector<double> D;
     std::vector<double> model;
     std::vector<std::string> features;
-    std::vector<std::vector<unsigned int> > instances;
+    std::vector<unsigned int> instances_buf;
+    std::vector<Range> instances;
     std::vector<signed char> labels;
     unsigned int num_instances;
 
     class Task {
     private:
-        const std::vector<std::vector<unsigned int> > & instances_;
+        const std::vector<Range> & instances_;
         const std::vector<signed char> & labels_;
         std::vector<double> & D_;
         unsigned int numThreads;
@@ -43,7 +48,7 @@ private:
         unsigned int h_best;
 
         void run() {
-            const std::vector<std::vector<unsigned int> > & instances = instances_;
+            const std::vector<Range> & instances = instances_;
             const std::vector<signed char> & labels = labels_;
             std::vector<double> & D = D_;
             const unsigned int num_instances = instances.size();
@@ -53,9 +58,9 @@ private:
             std::fill(errors.begin(), errors.end(), 0.0);
             for(unsigned int i = no; i < num_instances; i+=numThreads) {
                 const int label = labels[i];
-                const std::vector<unsigned int> &hs = instances[i];
-                const std::vector<unsigned int>::const_iterator it = std::lower_bound(hs.begin(), hs.end(), h_best);
-                const int prediction = (it==hs.end() || *it != h_best) ? -1 : +1;
+                const Range &hs = instances[i];
+                const std::vector<unsigned int>::const_iterator it = std::lower_bound(hs.begin, hs.end, h_best);
+                const int prediction = (it==hs.end || *it != h_best) ? -1 : +1;
                 if(label * prediction < 0) {
                     D[i] *= a_exp;
                 } else {
@@ -64,8 +69,8 @@ private:
                 D_sum += D[i];
                 if(label > 0) D_sum_plus += D[i];
                 const double d = D[i] * label;
-                for(unsigned int j = 0; j < hs.size(); ++j) {
-                    errors[hs[j]] -= d;
+                for(std::vector<unsigned int>::iterator h = hs.begin; h < hs.end; ++h) {
+                    errors[*h] -= d;
                 }
             }
         }
@@ -75,7 +80,7 @@ private:
         double D_sum;
         double D_sum_plus;
 
-        Task(const std::vector<std::vector<unsigned int> > & instances,
+        Task(const std::vector<Range> & instances,
              const std::vector<signed char> & labels,
              std::vector<double> D,
              unsigned int num_instances,
@@ -113,14 +118,17 @@ public:
         std::map<std::string, double> m;
         std::ifstream ifinstances(instances_file);
         std::string line;
+        std::string h;
         num_instances = 0;
+        unsigned int buf_size = 0;
+
         while(ifinstances && getline(ifinstances, line)) {
             std::istringstream is(line);
-            std::string h;
             int label;
             is >> label;
             while(is >> h) {
                 m[h] = 0.0;
+                ++buf_size;
             }
             ++num_instances;
             if(num_instances % 1000 == 0) {
@@ -140,6 +148,9 @@ public:
         labels.reserve(num_instances);
         instances.resize(0);
         instances.reserve(num_instances);
+        instances_buf.resize(0);
+        instances_buf.reserve(buf_size);
+        std::cout << std::endl << '"' << instances_buf.capacity() << '"' << std::endl;
         features.resize(0);
         features.reserve(m.size());
         model.resize(0);
@@ -153,23 +164,25 @@ public:
     void initializeInstances(const char* instances_file) {
         std::ifstream ifinstances(instances_file);
         std::string line;
+        std::string h;
         const double bias = getBias();
         while(ifinstances && getline(ifinstances, line)) {
             std::istringstream is(line);
-            std::string h;
-            std::vector<unsigned int> v;
             int label;
             double score = bias;
+            Range range;
+            range.begin = instances_buf.end();
             is >> label;
             labels.push_back(label);
             while(is >> h) {
                 std::vector<std::string>::iterator it = std::lower_bound(features.begin(), features.end(), h);
                 const unsigned int index = it - features.begin();
-                v.push_back(index);
+                instances_buf.push_back(index);
                 score += model[index];
             }
-            std::sort(v.begin(), v.end());
-            instances.push_back(v);
+            range.end = instances_buf.end();
+            std::sort(range.begin, range.end);
+            instances.push_back(range);
             D.push_back(std::exp(-label*score*2));
             if(D.size() % 1000 == 0)
                 std::cerr << "loading instances...: " << D.size() << "/" << num_instances << " instances loaded\r";
@@ -300,10 +313,10 @@ public:
         unsigned int pp = 0, pn = 0, np = 0, nn = 0;
         for(unsigned int i = 0; i < num_instances; ++i) {
             const int label = labels[i];
-            const std::vector<unsigned int> &hs = instances[i];
+            const Range &hs = instances[i];
             double score = bias;
-            for(unsigned int j = 0; j < hs.size(); ++j) {
-                score += model[hs[j]];
+            for(std::vector<unsigned int>::iterator h = hs.begin; h < hs.end; ++h) {
+                score += model[*h];
             }
             if(score >= 0) {
                 if(label > 0) {
