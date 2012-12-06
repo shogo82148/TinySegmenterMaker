@@ -16,7 +16,7 @@ AdaBoostを用いて学習します．
 新しい弱分類器の分類精度が0.001以下，繰り返し回数が10000回以上となったら学習を終了します．
 
 ``` bash
-$ g++ -O3 -o train train.cpp # コンパイル
+$ g++ -lboost_thread-mt -O3 -o train train.cpp # コンパイル
 $ ./train -t 0.001 -n 10000 features.txt model # 学習
 ```
 
