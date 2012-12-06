@@ -9,9 +9,12 @@
 #include <set>
 #include <cstdlib>
 #include <unistd.h>
+#include <signal.h>
+
+#ifdef MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#include <signal.h>
+#endif
 
 static volatile sig_atomic_t eflag = 0;
 
@@ -44,7 +47,9 @@ private:
         std::vector<double> & D_;
         unsigned int numThreads;
         unsigned int no;
+#ifdef MULTITHREAD
         boost::thread thread;
+#endif
         double a_exp;
         unsigned int h_best;
 
@@ -96,11 +101,17 @@ private:
         void start(unsigned int h_best, double a_exp) {
             this->h_best = h_best;
             this->a_exp = a_exp;
+#ifdef MULTITHREAD
             thread = boost::thread(boost::bind(&Task::run, this));
+#else
+            run();
+#endif
         }
 
         void join() {
+#ifdef MULTITHREAD
             thread.join();
+#endif
         }
     };
 
@@ -360,7 +371,11 @@ int main(int argc, char** argv) {
             t.loadModel(optarg);
             break;
         case 'm':
+#ifdef MULTITHREAD
             t.numThreads = std::atoi(optarg);
+#else
+            t.numThreads = 1;
+#endif
             break;
         }
     }

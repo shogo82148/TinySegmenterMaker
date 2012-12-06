@@ -16,7 +16,7 @@ AdaBoostを用いて学習します．
 新しい弱分類器の分類精度が0.001以下，繰り返し回数が10000回以上となったら学習を終了します．
 
 ``` bash
-$ g++ -lboost_thread-mt -O3 -o train train.cpp # コンパイル
+$ g++ -O3 -o train train.cpp # コンパイル
 $ ./train -t 0.001 -n 10000 features.txt model # 学習
 ```
 
@@ -27,6 +27,16 @@ $ ./segment model
 私の名前は中野です
 私 の 名前 は 中野 です
 ```
+
+## マルチスレッドで学習
+
+学習プログラム train はマルチスレッドに対応しています．
+コンパイルにはboostが必要です．
+
+``` bash
+$ g++ -DMULTITHREAD -lboost_thread-mt -O3 -o train train.cpp
+```
+
 
 ## 学習済みモデル
 
