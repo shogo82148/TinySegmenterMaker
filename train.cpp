@@ -10,6 +10,16 @@
 #include <cstdlib>
 #include <unistd.h>
 
+static volatile sig_atomic_t eflag = 0;
+
+static void handler(int signum) {
+    if(eflag) {
+        eflag = 0;
+    } else {
+        exit(0);
+    }
+}
+
 class AdaBoost {
 private:
     std::vector<double> D;
@@ -104,7 +114,7 @@ public:
         double a = 0;
         double a_exp = 1;
 
-        for(int t = 0; t < numIteration; ++t) {
+        for(int t = 0; eflag && t < numIteration; ++t) {
             // update & calculate errors
             double D_sum = 0.0;
             double D_sum_plus = 0.0;
@@ -242,6 +252,11 @@ public:
 };
 
 int main(int argc, char** argv) {
+    if (signal(SIGINT, handler) == SIG_ERR) {
+        std::cerr << "signal error" << std::endl;
+        return -1;
+    }
+
     // Parse arg
     int c;
     AdaBoost t;
@@ -269,7 +284,9 @@ int main(int argc, char** argv) {
 
     t.initializeFeatures(instances_file);
     t.initializeInstances(instances_file);
+    eflag = 1;
     t.train();
     t.saveModel(model_file);
     t.showResult();
+    return 0;
 }
