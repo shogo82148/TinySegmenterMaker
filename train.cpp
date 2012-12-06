@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <signal.h>
 
 static volatile sig_atomic_t eflag = 0;
 
@@ -82,11 +83,11 @@ private:
 
         Task(const std::vector<Range> & instances,
              const std::vector<signed char> & labels,
-             std::vector<double> D,
-             unsigned int num_instances,
+             std::vector<double> & D,
+             unsigned int num_features,
              unsigned int no,
              unsigned int numThreads):
-            instances_(instances), labels_(labels), D_(D), errors(num_instances) {
+            instances_(instances), labels_(labels), D_(D), errors(num_features) {
 
             this->numThreads = numThreads;
             this->no = no;
@@ -208,6 +209,7 @@ public:
             for(int i = 0; i < numThreads; ++i) {
                 tasks[i]->start(h_best, a_exp);
             }
+
             for(int i = 0; i < numThreads; ++i) {
                 tasks[i]->join();
                 D_sum += tasks[i]->D_sum;
