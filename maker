@@ -173,6 +173,58 @@ def cpp(model):
     template = template.replace('__MODEL__', model_str)
     return template
 
+@language('java', 'java')
+def java(model):
+    def utf16encode(s):
+        result = ''
+        hexlist = '0123456789abcdef'
+        s = s.decode('utf-8').encode('utf-16-be')
+        l = [ord(ch) for ch in s]
+        for i in xrange(0, len(l), 2):
+            ch1 = l[i]
+            ch2 = l[i+1]
+            if ch1 == 0 and 0x20 <= ch2 <= 0x7e:
+                if chr(ch2) == '"':
+                    result += '\\"'
+                else:
+                    result += chr(ch2)
+            else:
+                result += '\\u'
+                result += hexlist[ch1>>4] + hexlist[ch1&0xF]
+                result += hexlist[ch2>>4] + hexlist[ch2&0xF]
+        return result
+
+    model_str = 'public class Model {\n'
+    model_str += 'public int BIAS;\n'
+    model_str += 'public Map<String, Integer> '
+    model_str += ','.join(key for key in model.iterkeys() if key != 'BIAS') + ';\n'
+    model_str += '}\n'
+
+    for key, value in model.iteritems():
+        if key == 'BIAS':
+            model_str += 'private static int BIAS = ' + str(value) + ';\n'
+        else:
+            a = value.items()
+            a.sort()
+            model_str += 'private static final String[] ' + key + '_KEYS = {' + ','.join(['"' + utf16encode(k) + '"' for k,v in a]) + '};\n'
+            model_str += 'private static final int[] ' + key + '_VALUES = {' + ','.join([str(v) for k,v in a]) + '};\n'
+
+    model_str += 'private Model newModel() {\n'
+    model_str += 'Model m = new Model();\n'
+    model_str += 'm.BIAS = BIAS;\n'
+    for key in model.iterkeys():
+        if key == 'BIAS':
+            continue
+        model_str += 'm.' + key + ' = new HashMap<String, Integer>();\n'
+        model_str += 'for(int i=0;i<' + key + '_KEYS.length;++i)'
+        model_str += 'm.' + key + '.put(' + key + '_KEYS[i],' + key + '_VALUES[i]);\n'
+    model_str += 'return m;\n'
+    model_str += '}\n'
+
+    template = open('templates/java.java').read()
+    template = template.replace('__MODEL__', model_str)
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",
