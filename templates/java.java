@@ -21,6 +21,10 @@ public class tinysegmenter {
     public String[] segment(String s) {
         final Model m = model;
 
+        if(s.length() == 0) {
+            return new String[0];
+        }
+
         ArrayList<String> result = new ArrayList<String>();
         int len = s.codePointCount(0, s.length());
 
