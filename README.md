@@ -69,6 +69,7 @@ $ ./maker perl < model
 $ ./maker ruby < medel
 $ ./maker python < model
 $ ./maker cpp < model
+$ ./maker tex < model
 $ ./maker all < model # 上のライブラリをすべて作成します
 ```
 
@@ -143,4 +144,14 @@ int main() {
         cout << v[i] << endl;
     }
 }
+```
+
+### TeX
+
+```tex
+\documentclass{jsarticle}
+\usepackage{tinysegmenter}
+\begin{document}
+\TinySegmenter{-}{私の名前は中野です}
+\end{document}
 ```
