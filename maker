@@ -225,6 +225,34 @@ def java(model):
     template = template.replace('__MODEL__', model_str)
     return template
 
+@language('tex', 'sty')
+def java(model):
+
+    def tostr(category, values):
+        result = ''
+        category = category.replace('1', 'i')
+        category = category.replace('2', 'ii')
+        category = category.replace('3', 'iii')
+        category = category.replace('4', 'iv')
+        category = category.replace('5', 'v')
+        category = category.replace('6', 'vi')
+        for key, value in values.iteritems():
+            result += r'\def\tseg@' + category + '@' + key + '{' + str(value) + '}\n'
+        return result
+
+    model_str = ''
+    for key, value in model.iteritems():
+        if key == 'BIAS':
+            continue
+        else:
+            model_str += tostr(key, value)
+
+
+    template = open('templates/tex.sty').read()
+    template = template.replace('__BIAS__', str(model['BIAS']))
+    template = template.replace('__MODEL__', model_str)
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",
