@@ -5,7 +5,7 @@ import re
 
 class Segmenter(object):
     patterns = [
-        [re.compile(u'[一ニ三四五六七八九十百千万億兆]'), 'M'],
+        [re.compile(u'[一二三四五六七八九十百千万億兆]'), 'M'],
         [re.compile(u'[一-龠々〆ヵヶ]'), 'H'],
         [re.compile(u'[ぁ-ん]'), 'I'],
         [re.compile(u'[ァ-ヴーｱ-ﾝﾞｰ]'), 'K'],

@@ -20,7 +20,7 @@ $ g++ -O3 -o train train.cpp # コンパイル
 $ ./train -t 0.001 -n 10000 features.txt model # 学習
 ```
 
-きちんと分割できるが実際に試してみます．
+きちんと分割できるか実際に試してみます．
 
 ``` bash
 $ ./segment model

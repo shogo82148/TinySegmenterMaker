@@ -226,7 +226,7 @@ def java(model):
     return template
 
 @language('tex', 'sty')
-def java(model):
+def tex(model):
 
     def tostr(category, values):
         result = ''
