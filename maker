@@ -253,6 +253,22 @@ def java(model):
     template = template.replace('__MODEL__', model_str)
     return template
 
+@language('vim', 'vim')
+def vim(model):
+    def tostr(obj):
+        items = []
+        for key, value in obj.iteritems():
+            if isinstance(value, dict):
+                value = tostr(value)
+            key = key.replace("'", "''")
+            key = "'" + key + "'"
+            items.append(key + ':' + str(value))
+        items.sort()
+        return '{' + ','.join(items) + '}'
+    template = open('templates/vim.vim').read()
+    template = template.replace('__MODEL__', tostr(model))
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",
