@@ -70,6 +70,7 @@ $ ./maker ruby < medel
 $ ./maker python < model
 $ ./maker cpp < model
 $ ./maker tex < model
+$ ./maker vim < model
 $ ./maker all < model # 上のライブラリをすべて作成します
 ```
 
@@ -154,4 +155,10 @@ int main() {
 \begin{document}
 \TinySegmenter{-}{私の名前は中野です}
 \end{document}
+```
+
+### Vim script
+
+```vim
+:echo tinysegmenter#segment('私の名前は中野です')
 ```
