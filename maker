@@ -269,6 +269,23 @@ def vim(model):
     template = template.replace('__MODEL__', tostr(model))
     return template
 
+@language('go', 'go')
+def go(model):
+    def tostr(obj, prefix = ""):
+        items = []
+        for key, value in obj.iteritems():
+            if isinstance(value, dict):
+                items.append(tostr(value, key + ':'))
+            else:
+                key = key.replace('"', '\"')
+                key = '"' + prefix + key + '"'
+                items.append(key + ':' + str(value))
+        items.sort()
+        return ','.join(items)
+    template = open('templates/go.go').read()
+    template = template.replace('__MODEL__', tostr(model))
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",

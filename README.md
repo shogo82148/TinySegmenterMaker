@@ -71,6 +71,7 @@ $ ./maker python < model
 $ ./maker cpp < model
 $ ./maker tex < model
 $ ./maker vim < model
+$ ./maker go < model
 $ ./maker all < model # 上のライブラリをすべて作成します
 ```
 
@@ -161,4 +162,23 @@ int main() {
 
 ```vim
 :echo tinysegmenter#segment('私の名前は中野です')
+```
+
+### Go
+
+```go
+package main
+
+import (
+	"fmt"
+	"tinysegmenter"
+)
+
+func main() {
+	s := tinysegmenter.NewSegmenter()
+	segs := s.Segment("私の名前は中野です")
+	for _, seg := range segs {
+		fmt.Printf("%s\n", seg)
+	}
+}
 ```
