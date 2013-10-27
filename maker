@@ -286,6 +286,28 @@ def go(model):
     template = template.replace('__MODEL__', tostr(model))
     return template
 
+@language('jsx', 'jsx')
+def jsx(model):
+    def tostr(obj):
+        BIAS = ''
+        items = []
+        for key, value in obj.iteritems():
+            if key == 'BIAS':
+                BIAS = str(value)
+                continue
+            if isinstance(value, dict):
+                value = tostr(value)[0]
+            if not re.match('[a-zA-Z0-9]+', key):
+                key = key.replace("'", "\\'")
+                key = "'" + key + "'"
+            items.append(key + ':' + str(value))
+        items.sort()
+        return ['{' + ','.join(items) + '}', BIAS]
+    model_str, bias = tostr(model)
+    template = open('templates/jsx.jsx').read()
+    template = template.replace('__MODEL__', model_str).replace('__BIAS__', bias)
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",

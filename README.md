@@ -72,6 +72,7 @@ $ ./maker cpp < model
 $ ./maker tex < model
 $ ./maker vim < model
 $ ./maker go < model
+$ ./maker jsx < model
 $ ./maker all < model # 上のライブラリをすべて作成します
 ```
 
@@ -180,5 +181,19 @@ func main() {
 	for _, seg := range segs {
 		fmt.Printf("%s\n", seg)
 	}
+}
+```
+
+### JSX
+
+```javascript
+import "tinysegmenter.jsx"
+
+class _Main
+{
+    static function main(args : string[]) : void
+    {
+        log TinySegmenter.segment("私の名前は中野です");
+    }
 }
 ```
