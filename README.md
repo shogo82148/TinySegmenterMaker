@@ -187,7 +187,7 @@ func main() {
 ### JSX
 
 ```javascript
-import "tinysegmenter.jsx"
+import "tinysegmenter.jsx";
 
 class _Main
 {
