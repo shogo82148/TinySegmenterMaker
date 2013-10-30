@@ -297,7 +297,7 @@ def jsx(model):
                 continue
             if isinstance(value, dict):
                 value = tostr(value)[0]
-            if not re.match('[a-zA-Z0-9]+', key):
+            if not re.match('[a-zA-Z0-9]+$', key):
                 key = key.replace("'", "\\'")
                 key = "'" + key + "'"
             items.append(key + ':' + str(value))
