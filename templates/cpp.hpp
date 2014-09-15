@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-class TinySegmeter {
+class TinySegmenter {
 protected:
     __MODEL__
     static unsigned int lengthOfCharactor(int ch) {
