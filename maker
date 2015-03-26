@@ -308,6 +308,31 @@ def jsx(model):
     template = template.replace('__MODEL__', model_str).replace('__BIAS__', bias)
     return template
 
+@language('csharp', 'cs')
+def csharp(model):
+    def tostr(obj):
+        BIAS = ''
+        items = []
+        for key, value in obj.iteritems():
+            if key == 'BIAS':
+                BIAS = str(value)
+                continue
+
+            items2 = []
+            for key2, value2 in value.iteritems():
+                key2 = key2.replace("\"", "\\\"")
+                key2 = "\"" + key2.replace("\"", "\\\"") + "\""
+                items2.append('{' + key2 + ', ' + str(value2) + '}')
+            items2.sort()
+
+            items.append('        public static readonly Dictionary<string, int> ' + key + ' = new Dictionary<string, int>() { ' + ','.join(items2) + ' };')
+        items.sort()
+        return ['\n'.join(items), BIAS]
+    model_str, bias = tostr(model)
+    template = open('templates/csharp.cs').read()
+    template = template.replace('__MODEL__', model_str).replace('__BIAS__', bias)
+    return template
+
 def main():
     parser = OptionParser()
     parser.add_option("-s", "--scale", dest = "scale",
