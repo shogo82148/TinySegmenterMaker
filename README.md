@@ -73,6 +73,7 @@ $ ./maker tex < model
 $ ./maker vim < model
 $ ./maker go < model
 $ ./maker jsx < model
+$ ./maker csharp < model
 $ ./maker all < model # 上のライブラリをすべて作成します
 ```
 
@@ -194,6 +195,20 @@ class _Main
     static function main(args : string[]) : void
     {
         log TinySegmenter.segment("私の名前は中野です");
+    }
+}
+
+### C#
+
+``` csharp
+static void Main(string[] args)
+{
+    tinysegmenter segmenter = new tinysegmenter();
+    List<string> segments = segmenter.Segment("私の名前は中野です");
+
+    for(int i = 0; i < segments.Count; i++)
+    {
+        Console.WriteLine(segments[i]);
     }
 }
 ```
