@@ -271,19 +271,70 @@ def vim(model):
 
 @language('go', 'go')
 def go(model):
-    def tostr(obj, prefix = ""):
+    def escape(key):
+        return key.replace("'", "\\'")
+
+    def unigram2map(obj):
         items = []
         for key, value in obj.iteritems():
-            if isinstance(value, dict):
-                items.append(tostr(value, key + ':'))
-            else:
-                key = key.replace('"', '\"')
-                key = '"' + prefix + key + '"'
-                items.append(key + ':' + str(value))
+            decoded_key = key.decode('utf-8')
+            rune = "'" + decoded_key + "'"
+            if decoded_key in [u'B1', u'B2', u'B3', u'E1', u'E2', u'E3']:
+                rune = decoded_key
+            elif len(decoded_key) != 1:
+                continue
+            items.append(rune.encode('utf-8') + ':' + str(value))
         items.sort()
-        return ','.join(items)
+        return 'map[rune]int{' + ','.join(items) + '}'
+
+    def tomap(obj, size):
+        items = []
+        for key, value in obj.iteritems():
+            runes = ["'" + escape(item.encode('utf-8')) + "'" for item in key.decode('utf-8')]
+            if len(runes) != size:
+                continue
+            items.append('{' + ','.join(runes) + '}:' + str(value))
+        items.sort()
+        return 'map[[' + str(size) + ']rune]int{' + ','.join(items) + '}'
+
+    def ngram2map(obj, size):
+        items = []
+        for key, value in obj.iteritems():
+            decoded_key = key.decode('utf-8')
+            runes = []
+            while len(decoded_key) != 0:
+                if len(decoded_key) != size and len(decoded_key) >= 2 and decoded_key[0:2] in ['B1', 'B2', 'B3', 'E1', 'E2', 'E3']:
+                    runes.append(decoded_key[0:2].encode('utf-8'))
+                    decoded_key = decoded_key[2:]
+                else:
+                    runes.append("'" + escape(decoded_key[0].encode('utf-8')) + "'")
+                    decoded_key = decoded_key[1:]
+            if len(runes) != size:
+                continue
+            items.append('{' + ','.join(runes) + '}:' + str(value))
+        items.sort()
+        return 'map[[' + str(size) + ']rune]int{' + ','.join(items) + '}'
+
+    model_str = "\n\t\tBias: " + str(model['BIAS']) + ",\n"
+    for key in ['UP1', 'UP2', 'UP3', 'UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6']:
+        model_str += "\t\t" + key + ": " + unigram2map(model[key]) + ",\n"
+    for key in ['BP1', 'BP2', 'BC1', 'BC2', 'BC3', 'UQ1', 'UQ2', 'UQ3']:
+        model_str += "\t\t" + key + ": " + tomap(model[key], 2) + ",\n"
+    for key in ['TC1', 'TC2', 'TC3', 'TC4', 'BQ1', 'BQ2', 'BQ3', 'BQ4']:
+        model_str += "\t\t" + key + ": " + tomap(model[key], 3) + ",\n"
+    for key in ['TQ1', 'TQ2', 'TQ3', 'TQ4']:
+        model_str += "\t\t" + key + ": " + tomap(model[key], 4) + ",\n"
+
+    for key in ['UW1', 'UW2', 'UW3', 'UW4', 'UW5', 'UW6']:
+        model_str += "\t\t" + key + ": " + unigram2map(model[key]) + ",\n"
+    for key in ['BW1', 'BW2', 'BW3']:
+        model_str += "\t\t" + key + ": " + ngram2map(model[key], 2) + ",\n"
+    for key in ['TW1', 'TW2', 'TW3', 'TW4']:
+        model_str += "\t\t" + key + ": " + ngram2map(model[key], 3) + ",\n"
+
+    model_str += "\t"
     template = open('templates/go.go').read()
-    template = template.replace('__MODEL__', tostr(model))
+    template = template.replace('__MODEL__', model_str)
     return template
 
 @language('jsx', 'jsx')
