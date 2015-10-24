@@ -3,7 +3,12 @@ import tinysegmenter
 
 segmenter = tinysegmenter.TinySegmenter()
 f = open('timemachineu8j.txt')
-text = f.read().decode('utf-8')
+text = f.read()
+
+try:
+    text = text.decode('utf-8')
+except:
+    pass
 
 start = time.time()
 for _ in range(100):
