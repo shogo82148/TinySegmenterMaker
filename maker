@@ -17,7 +17,7 @@ categories = frozenset(['UP1', 'UP2', 'UP3',
               'BQ1', 'BQ2', 'BQ3', 'BQ4',
               'TQ1', 'TQ2', 'TQ3', 'TQ4',
 ])
-re_key = re.compile('([a-zA-Z0-9]*):(.*)')
+re_key = re.compile(u'([a-zA-Z0-9]*):(.*)')
 def load(f, scale = 10000):
     model = dict([category, {}] for category in categories)
     model['BIAS'] = 0
@@ -51,7 +51,7 @@ class javascript(object):
     @classmethod
     def tostr(cls, obj):
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             if isinstance(value, dict):
                 value = cls.tostr(value)
             if not re.match('[a-zA-Z0-9]+', key):
@@ -77,7 +77,7 @@ class javascript(object):
 def python(model):
     def tostr(obj):
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             if isinstance(value, dict):
                 value = tostr(value)
             key = key.replace("'", "\\'")
@@ -94,7 +94,7 @@ def python(model):
 def perl(model):
     def tostr(obj):
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             key = key.replace("'", "\\'")
             key = "'" + key + "'"
             items.append(key + '=>' + str(value))
@@ -102,7 +102,7 @@ def perl(model):
         return '(' + ','.join(items) + ')'
 
     model_str = ''
-    for key, value in model.iteritems():
+    for key, value in model.items():
         if key == 'BIAS':
             model_str += 'my $BIAS = ' + str(value) + ';\n'
         else:
@@ -115,7 +115,7 @@ def perl(model):
 def ruby(model):
     def tostr(obj):
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             key = key.replace("'", "\\'")
             key = "'" + key + "'"
             items.append(key + '=>' + str(value))
@@ -123,7 +123,7 @@ def ruby(model):
         return '{' + ','.join(items) + '}'
 
     model_str = ''
-    for key, value in model.iteritems():
+    for key, value in model.items():
         if key == 'BIAS':
             model_str += 'BIAS = ' + str(value) + ';\n'
         else:
@@ -141,7 +141,7 @@ def cpp(model):
             return "'\\x" + hex(ord(ch))[2:] + "'"
     def tostr(obj, pos = 0):
         if len(obj) == 1:
-            key, value = obj.items()[0]
+            key, value = list(obj.items())[0]
             conditions = ['s[' + str(i) + ']==' + ch2label(ch) for i, ch in enumerate(key)][pos:]
             if len(conditions)==0:
                 return 'return ' + str(value) + ';'
@@ -149,7 +149,7 @@ def cpp(model):
                 return 'if(s.size()==' + str(len(key)) + '&&' + '&&'.join(conditions) + ')' + \
                     'return ' + str(value) + ';else return 0;'
         cases = {}
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             ch = key[pos]
             if ch in cases:
                 cases[ch][key] = value
@@ -157,14 +157,14 @@ def cpp(model):
                 cases[ch] = {key: value}
         ret = 'if(s.size()<=' + str(pos) + ')return 0;'
         ret += 'switch(s[' + str(pos) + ']){'
-        for ch, o in cases.iteritems():
+        for ch, o in cases.items():
             ret += 'case ' + ch2label(ch) + ':'
             ret += tostr(o, pos + 1)
         ret += 'default:return 0;}'
         return ret
 
     model_str = ''
-    for key, value in model.iteritems():
+    for key, value in model.items():
         if key == 'BIAS':
             model_str += 'int BIAS() const {return ' + str(value) + ';}\n'
         else:
@@ -178,9 +178,14 @@ def java(model):
     def utf16encode(s):
         result = ''
         hexlist = '0123456789abcdef'
-        s = s.decode('utf-8').encode('utf-16-be')
-        l = [ord(ch) for ch in s]
-        for i in xrange(0, len(l), 2):
+        try: # for python2
+            s = s.decode('utf-8').encode('utf-16-be')
+            l = [ord(ch) for ch in s]
+        except: # for python3
+            s = s.encode('utf-16-be')
+            l = [ch for ch in s]
+
+        for i in range(0, len(l), 2):
             ch1 = l[i]
             ch2 = l[i+1]
             if ch1 == 0 and 0x20 <= ch2 <= 0x7e:
@@ -197,14 +202,14 @@ def java(model):
     model_str = 'public class Model {\n'
     model_str += 'public int BIAS;\n'
     model_str += 'public Map<String, Integer> '
-    model_str += ','.join(key for key in model.iterkeys() if key != 'BIAS') + ';\n'
+    model_str += ','.join(key for key in model.keys() if key != 'BIAS') + ';\n'
     model_str += '}\n'
 
-    for key, value in model.iteritems():
+    for key, value in model.items():
         if key == 'BIAS':
             model_str += 'private static int BIAS = ' + str(value) + ';\n'
         else:
-            a = value.items()
+            a = list(value.items())
             a.sort()
             model_str += 'private static final String[] ' + key + '_KEYS = {' + ','.join(['"' + utf16encode(k) + '"' for k,v in a]) + '};\n'
             model_str += 'private static final int[] ' + key + '_VALUES = {' + ','.join([str(v) for k,v in a]) + '};\n'
@@ -212,7 +217,7 @@ def java(model):
     model_str += 'private Model newModel() {\n'
     model_str += 'Model m = new Model();\n'
     model_str += 'm.BIAS = BIAS;\n'
-    for key in model.iterkeys():
+    for key in model.keys():
         if key == 'BIAS':
             continue
         model_str += 'm.' + key + ' = new HashMap<String, Integer>();\n'
@@ -236,12 +241,12 @@ def tex(model):
         category = category.replace('4', 'iv')
         category = category.replace('5', 'v')
         category = category.replace('6', 'vi')
-        for key, value in values.iteritems():
+        for key, value in values.items():
             result += r'\def\tseg@' + category + '@' + key + '{' + str(value) + '}\n'
         return result
 
     model_str = ''
-    for key, value in model.iteritems():
+    for key, value in model.items():
         if key == 'BIAS':
             continue
         else:
@@ -257,7 +262,7 @@ def tex(model):
 def vim(model):
     def tostr(obj):
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             if isinstance(value, dict):
                 value = tostr(value)
             key = key.replace("'", "''")
@@ -273,7 +278,7 @@ def vim(model):
 def go(model):
     def tostr(obj, prefix = ""):
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             if isinstance(value, dict):
                 items.append(tostr(value, key + ':'))
             else:
@@ -291,7 +296,7 @@ def jsx(model):
     def tostr(obj):
         BIAS = ''
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             if key == 'BIAS':
                 BIAS = str(value)
                 continue
@@ -313,13 +318,13 @@ def csharp(model):
     def tostr(obj):
         BIAS = ''
         items = []
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             if key == 'BIAS':
                 BIAS = str(value)
                 continue
 
             items2 = []
-            for key2, value2 in value.iteritems():
+            for key2, value2 in value.items():
                 key2 = key2.replace("\"", "\\\"")
                 key2 = "\"" + key2.replace("\"", "\\\"") + "\""
                 items2.append('{' + key2 + ', ' + str(value2) + '}')
@@ -354,7 +359,7 @@ def main():
         model = load(sys.stdin)
     lang = args[0]
     if lang == 'all':
-        for maker in languages.itervalues():
+        for maker in languages.values():
             with open(options.dir + '/tinysegmenter.' + maker.ext, 'w') as f:
                 f.write(maker.execute(model))
     elif lang in languages:
