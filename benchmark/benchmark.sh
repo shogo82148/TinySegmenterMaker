@@ -2,6 +2,10 @@
 
 set -xe
 
+# perl
+cp ../tinysegmenter.pm ./tinysegmenter.pm
+perl -I. benchmark.pl
+
 # node
 cp ../tinysegmenter.js ./tinysegmenter.js
 node --version
