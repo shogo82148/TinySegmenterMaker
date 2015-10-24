@@ -167,8 +167,8 @@ func (s *Segmenter) Segment(input string) []string {
 		} else if pos2 == len(input) {
 			w6, c6 = E1, 'O'
 		} else {
-			pos3 = pos2 + utf8.RuneLen(w5)
-			w6, _ = utf8.DecodeRuneInString(input[pos3:])
+			pos3 = pos2 + size
+			w6, size = utf8.DecodeRuneInString(input[pos3:])
 			c6 = gettype(w6)
 		}
 
