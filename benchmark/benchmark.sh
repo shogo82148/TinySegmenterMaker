@@ -2,6 +2,11 @@
 
 set -xe
 
+# cpp
+cp ../tinysegmenter.hpp ./tinysegmenter.hpp
+g++ -o benchmark benchmark.cpp
+./benchmark
+
 # perl
 cp ../tinysegmenter.pm ./tinysegmenter.pm
 perl -I. benchmark.pl
