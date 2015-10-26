@@ -13,10 +13,10 @@ int main() {
     string str((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
     TinySegmenter segmenter;
 
-    auto start = time(NULL);
+    time_t start = time(NULL);
     for (int i = 0; i < 100; i++) {
         segmenter.segment(str);
     }
-    auto end = time(NULL);
+    time_t end = time(NULL);
     cout << (end - start);
 }
