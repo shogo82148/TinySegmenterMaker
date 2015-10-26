@@ -4,7 +4,7 @@ set -xe
 
 # cpp
 cp ../tinysegmenter.hpp ./tinysegmenter.hpp
-g++ -o benchmark benchmark.cpp
+g++ -O3 -o benchmark benchmark.cpp
 ./benchmark
 
 # perl
