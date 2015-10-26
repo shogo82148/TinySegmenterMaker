@@ -18,5 +18,5 @@ int main() {
         segmenter.segment(str);
     }
     time_t end = time(NULL);
-    cout << (end - start);
+    cout << (end - start) << endl;
 }
