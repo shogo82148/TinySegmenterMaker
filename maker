@@ -69,20 +69,20 @@ class javascript(object):
             if not re.match('[a-zA-Z0-9]+', key):
                 key = key.replace("'", "\\'")
                 key = "'" + key + "'"
-            items.append(key + ':' + str(value))
+            items.append(u"{0}:{1}".format(key, value))
         items.sort()
         return '{' + ','.join(items) + '}'
 
     @language('javascript', 'js')
     def original(model):
-        template = open('templates/javascript.js').read()
-        template = template.replace('__MODEL__', javascript.tostr(model))
+        template = u(open('templates/javascript.js').read())
+        template = template.replace(u'__MODEL__', javascript.tostr(model))
         return template
 
     @language('javascriptdp', 'dp.js')
     def dp(model):
-        template = open('templates/javascript.dp.js').read()
-        template = template.replace('__MODEL__', javascript.tostr(model))
+        template = u(open('templates/javascript.dp.js').read())
+        template = template.replace(u'__MODEL__', javascript.tostr(model))
         return template
 
 @language('python', 'py')
@@ -92,14 +92,14 @@ def python(model):
         for key, value in obj.items():
             if isinstance(value, dict):
                 value = tostr(value)
-            key = key.replace("'", "\\'")
-            key = "u'" + key + "'"
-            items.append(key + ':' + str(value))
+            key = key.replace(u"'", u"\\'")
+            key = u"u'" + key + u"'"
+            items.append(u"{0}:{1}".format(key, value))
         items.sort()
-        return '{' + ','.join(items) + '}'
+        return u'{' + u','.join(items) + u'}'
 
-    template = open('templates/python.py').read()
-    template = template.replace('__MODEL__', tostr(model))
+    template = u(open('templates/python.py').read())
+    template = template.replace(u'__MODEL__', tostr(model))
     return template
 
 @language('perl', 'pm')
@@ -119,8 +119,8 @@ def perl(model):
             model_str += 'my $BIAS = ' + str(value) + ';\n'
         else:
             model_str += 'my %' + key + ' = ' + tostr(value) + ';\n'
-    template = open('templates/perl.pl').read()
-    template = template.replace('__MODEL__', model_str)
+    template = u(open('templates/perl.pl').read())
+    template = template.replace(u'__MODEL__', model_str)
     return template
 
 @language('ruby', 'rb')
@@ -140,8 +140,8 @@ def ruby(model):
             model_str += 'BIAS = ' + str(value) + ';\n'
         else:
             model_str += key + ' = ' + tostr(value) + ';\n'
-    template = open('templates/ruby.rb').read()
-    template = template.replace('__MODEL__', model_str)
+    template = u(open('templates/ruby.rb').read())
+    template = template.replace(u'__MODEL__', model_str)
     return template
 
 @language('cpp', 'hpp')
@@ -192,11 +192,10 @@ def java(model):
     def utf16encode(s):
         result = ''
         hexlist = '0123456789abcdef'
+        s = s.encode('utf-16-be')
         try: # for python2
-            s = s.decode('utf-8').encode('utf-16-be')
             l = [ord(ch) for ch in s]
         except: # for python3
-            s = s.encode('utf-16-be')
             l = [ch for ch in s]
 
         for i in range(0, len(l), 2):
@@ -267,9 +266,9 @@ def tex(model):
             model_str += tostr(key, value)
 
 
-    template = open('templates/tex.sty').read()
-    template = template.replace('__BIAS__', str(model['BIAS']))
-    template = template.replace('__MODEL__', model_str)
+    template = u(open('templates/tex.sty').read())
+    template = template.replace(u'__BIAS__', u"{0}".format(model['BIAS']))
+    template = template.replace(u'__MODEL__', model_str)
     return template
 
 @language('vim', 'vim')
@@ -281,11 +280,11 @@ def vim(model):
                 value = tostr(value)
             key = key.replace("'", "''")
             key = "'" + key + "'"
-            items.append(key + ':' + str(value))
+            items.append(u'{0}:{1}'.format(key, value))
         items.sort()
         return '{' + ','.join(items) + '}'
-    template = open('templates/vim.vim').read()
-    template = template.replace('__MODEL__', tostr(model))
+    template = u(open('templates/vim.vim').read())
+    template = template.replace(u'__MODEL__', tostr(model))
     return template
 
 @language('go', 'go')
@@ -301,8 +300,8 @@ def go(model):
                 items.append(key + ':' + str(value))
         items.sort()
         return ','.join(items)
-    template = open('templates/go.go').read()
-    template = template.replace('__MODEL__', tostr(model))
+    template = u(open('templates/go.go').read())
+    template = template.replace(u'__MODEL__', tostr(model))
     return template
 
 @language('jsx', 'jsx')
@@ -319,12 +318,12 @@ def jsx(model):
             if not re.match('[a-zA-Z0-9]+$', key):
                 key = key.replace("'", "\\'")
                 key = "'" + key + "'"
-            items.append(key + ':' + str(value))
+            items.append(u"{0}:{1}".format(key, value))
         items.sort()
         return ['{' + ','.join(items) + '}', BIAS]
     model_str, bias = tostr(model)
-    template = open('templates/jsx.jsx').read()
-    template = template.replace('__MODEL__', model_str).replace('__BIAS__', bias)
+    template = u(open('templates/jsx.jsx').read())
+    template = template.replace(u'__MODEL__', model_str).replace(u'__BIAS__', bias)
     return template
 
 @language('csharp', 'cs')
@@ -348,8 +347,8 @@ def csharp(model):
         items.sort()
         return ['\n'.join(items), BIAS]
     model_str, bias = tostr(model)
-    template = open('templates/csharp.cs').read()
-    template = template.replace('__MODEL__', model_str).replace('__BIAS__', bias)
+    template = u(open('templates/csharp.cs').read())
+    template = template.replace(u'__MODEL__', model_str).replace(u'__BIAS__', bias)
     return template
 
 def main():
@@ -375,7 +374,7 @@ def main():
     if lang == 'all':
         for maker in languages.values():
             with open(options.dir + '/tinysegmenter.' + maker.ext, 'w') as f:
-                f.write(maker.execute(model))
+                f.write(fileformat(maker.execute(model)))
     elif lang in languages:
         maker = languages[lang]
         filename = options.output or options.dir + '/tinysegmenter.' + maker.ext
