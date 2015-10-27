@@ -14,7 +14,7 @@ protected:
             return 2;
         } else if((ch & 0xF0) == 0xE0) {
             return 3;
-        } else if((ch && 0xF8) == 0xF0) {
+        } else if((ch & 0xF8) == 0xF0) {
             return 4;
         }
         return 0;

@@ -4,16 +4,20 @@
 from Segmenter import Segmenter
 import sys
 
-class Leaner(object):
-    def add_instance(self, attributes, label):
-        a = [str(label)] + list(attributes)
-        print '\t'.join(a)
-
-def main():
+if sys.version_info >= (3, 0):
+    in_file = sys.stdin.buffer
+    out_file = sys.stdout.buffer
+else:
     in_file = sys.stdin
     out_file = sys.stdout
 
-    s= Segmenter(Leaner())
+class Learner(object):
+    def add_instance(self, attributes, label):
+        a = [str(label)] + list(attributes)
+        out_file.write((u'\t'.join(a)+u'\n').encode('utf-8'))
+
+def main():
+    s = Segmenter(Learner())
     for line in in_file:
         line = line.strip()
         line = line.decode('utf-8')

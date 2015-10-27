@@ -7,12 +7,19 @@ import sys
 def main():
     model = sys.argv[1]
 
+    if sys.version_info >= (3, 0):
+        in_file = sys.stdin.buffer
+        out_file = sys.stdout.buffer
+    else:
+        in_file = sys.stdin
+        out_file = sys.stdout
+
     s = Segmenter()
     s.learner.load(open(model))
-    for line in iter(sys.stdin.readline, ""):
+    for line in in_file:
         line = line.strip()
         line = line.decode('utf-8')
-        print ' '.join(s.parse(line))
+        out_file.write((u' '.join(s.parse(line)) + u'\n').encode('utf-8'))
 
 if __name__=='__main__':
     main()
