@@ -336,7 +336,7 @@ def go(model):
                     key = key[1:]
             if len(runes) != size:
                 continue
-            items.append(u"{{0}}:{1}".format(','.join(runes), value))
+            items.append(u"[{0}]rune{{{1}}}:{2}".format(size, ','.join(runes), value))
         items.sort()
         return 'map[[' + str(size) + ']rune]int{' + ','.join(items) + '}'
 
