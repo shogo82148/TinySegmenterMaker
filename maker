@@ -300,7 +300,7 @@ def go(model):
                 rune = key
             elif len(key) != 1:
                 continue
-            items.append("{0}:{1}".format(rune, value))
+            items.append(u"{0}:{1}".format(rune, value))
         items.sort()
         return u'map[rune]int{' + u','.join(items) + u'}'
 
@@ -319,7 +319,7 @@ def go(model):
         for key, value in obj.items():
             if len(key) != 2:
                 continue
-            items.append("0x{0:X}:{1}".format((ord(key[0]) << 32) + ord(key[1]), value))
+            items.append(u"0x{0:X}:{1}".format((ord(key[0]) << 32) + ord(key[1]), value))
         items.sort()
         return 'map[uint64]int{' + ','.join(items) + '}'
 
@@ -340,7 +340,7 @@ def go(model):
         items.sort()
         return 'map[[' + str(size) + ']rune]int{' + ','.join(items) + '}'
 
-    model_str = "\n\t\tBias: " + str(model['BIAS']) + ",\n"
+    model_str = u"\n\t\tBias: {0},\n".format(model['BIAS'])
     for key in ['UP1', 'UP2', 'UP3', 'UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6']:
         model_str += "\t\t" + key + ": " + unigram2map(model[key]) + ",\n"
     for key in ['BP1', 'BP2', 'BC1', 'BC2', 'BC3', 'UQ1', 'UQ2', 'UQ3']:
