@@ -10,6 +10,11 @@ For details, see http://chasen.org/~taku/software/TinySegmenter/LICENCE.txt
 
 import re
 
+try:
+    xrange
+except NameError:
+    xrange = range       # for Python3
+
 class TinySegmenter(object):
     default_model = __MODEL__
     patterns = {
@@ -25,7 +30,7 @@ class TinySegmenter(object):
         self.model = model or self.default_model;
 
         chartype = [];
-        for pattern, label in self.patterns.iteritems():
+        for pattern, label in self.patterns.items():
             chartype.append([re.compile(pattern), label])
         self.chartype = chartype
 
