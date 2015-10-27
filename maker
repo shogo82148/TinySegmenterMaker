@@ -304,15 +304,15 @@ def go(model):
         items.sort()
         return u'map[rune]int{' + u','.join(items) + u'}'
 
-    def tomap(obj, size):
+    def asciingram2map(obj, size):
         items = []
         for key, value in obj.items():
-            runes = [u"'" + escape(item) + u"'" for item in key]
-            if len(runes) != size:
-                continue
-            items.append(u"[{0}]rune{{{1}}}:{2}".format(size, ','.join(runes), value))
+            keyhash = 0
+            for ch in key:
+                keyhash = (keyhash << 8) | ord(ch)
+            items.append(u"0x{0:X}:{1}".format(keyhash, value))
         items.sort()
-        return 'map[[' + str(size) + ']rune]int{' + ','.join(items) + '}'
+        return 'map[uint32]int{' + ','.join(items) + '}'
 
     def bigram2map(obj):
         items = []
@@ -344,11 +344,11 @@ def go(model):
     for key in ['UP1', 'UP2', 'UP3', 'UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6']:
         model_str += "\t\t" + key + ": " + unigram2map(model[key]) + ",\n"
     for key in ['BP1', 'BP2', 'BC1', 'BC2', 'BC3', 'UQ1', 'UQ2', 'UQ3']:
-        model_str += "\t\t" + key + ": " + bigram2map(model[key]) + ",\n"
+        model_str += "\t\t" + key + ": " + asciingram2map(model[key], 2) + ",\n"
     for key in ['TC1', 'TC2', 'TC3', 'TC4', 'BQ1', 'BQ2', 'BQ3', 'BQ4']:
-        model_str += "\t\t" + key + ": " + tomap(model[key], 3) + ",\n"
+        model_str += "\t\t" + key + ": " + asciingram2map(model[key], 3) + ",\n"
     for key in ['TQ1', 'TQ2', 'TQ3', 'TQ4']:
-        model_str += "\t\t" + key + ": " + tomap(model[key], 4) + ",\n"
+        model_str += "\t\t" + key + ": " + asciingram2map(model[key], 4) + ",\n"
 
     for key in ['UW1', 'UW2', 'UW3', 'UW4', 'UW5', 'UW6']:
         model_str += "\t\t" + key + ": " + unigram2map(model[key]) + ",\n"

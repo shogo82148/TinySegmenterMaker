@@ -65,26 +65,26 @@ type Segmenter struct {
 	UC4  map[rune]int
 	UC5  map[rune]int
 	UC6  map[rune]int
-	BP1  map[uint64]int
-	BP2  map[uint64]int
-	BC1  map[uint64]int
-	BC2  map[uint64]int
-	BC3  map[uint64]int
-	UQ1  map[uint64]int
-	UQ2  map[uint64]int
-	UQ3  map[uint64]int
-	TC1  map[[3]rune]int
-	TC2  map[[3]rune]int
-	TC3  map[[3]rune]int
-	TC4  map[[3]rune]int
-	BQ1  map[[3]rune]int
-	BQ2  map[[3]rune]int
-	BQ3  map[[3]rune]int
-	BQ4  map[[3]rune]int
-	TQ1  map[[4]rune]int
-	TQ2  map[[4]rune]int
-	TQ3  map[[4]rune]int
-	TQ4  map[[4]rune]int
+	BP1  map[uint32]int
+	BP2  map[uint32]int
+	BC1  map[uint32]int
+	BC2  map[uint32]int
+	BC3  map[uint32]int
+	UQ1  map[uint32]int
+	UQ2  map[uint32]int
+	UQ3  map[uint32]int
+	TC1  map[uint32]int
+	TC2  map[uint32]int
+	TC3  map[uint32]int
+	TC4  map[uint32]int
+	BQ1  map[uint32]int
+	BQ2  map[uint32]int
+	BQ3  map[uint32]int
+	BQ4  map[uint32]int
+	TQ1  map[uint32]int
+	TQ2  map[uint32]int
+	TQ3  map[uint32]int
+	TQ4  map[uint32]int
 	UW1  map[rune]int
 	UW2  map[rune]int
 	UW3  map[rune]int
@@ -176,8 +176,8 @@ func (s *Segmenter) Segment(input string) []string {
 		score += s.UP1[p1]
 		score += s.UP2[p2]
 		score += s.UP2[p2]
-		score += s.BP1[(uint64(p1)<<32)|uint64(p2)]
-		score += s.BP2[(uint64(p3)<<32)|uint64(p3)]
+		score += s.BP1[(uint32(p1)<<8)|uint32(p2)]
+		score += s.BP2[(uint32(p3)<<8)|uint32(p3)]
 		score += s.UW1[w1]
 		score += s.UW2[w2]
 		score += s.UW3[w3]
@@ -197,24 +197,24 @@ func (s *Segmenter) Segment(input string) []string {
 		score += s.UC4[c4]
 		score += s.UC5[c5]
 		score += s.UC6[c6]
-		score += s.BC1[(uint64(c2)<<32)|uint64(c3)]
-		score += s.BC2[(uint64(c3)<<32)|uint64(c4)]
-		score += s.BC3[(uint64(c4)<<32)|uint64(c5)]
-		score += s.TC1[[3]rune{c1, c2, c3}]
-		score += s.TC2[[3]rune{c2, c3, c4}]
-		score += s.TC3[[3]rune{c3, c4, c5}]
-		score += s.TC4[[3]rune{c4, c5, c6}]
-		score += s.UQ1[(uint64(p1)<<32)|uint64(c1)]
-		score += s.UQ2[(uint64(p2)<<32)|uint64(c2)]
-		score += s.UQ3[(uint64(p3)<<32)|uint64(c3)]
-		score += s.BQ1[[3]rune{p2, c2, c3}]
-		score += s.BQ2[[3]rune{p2, c3, c4}]
-		score += s.BQ3[[3]rune{p3, c2, c3}]
-		score += s.BQ4[[3]rune{p3, c3, c4}]
-		score += s.TQ1[[4]rune{p2, c1, c2, c3}]
-		score += s.TQ2[[4]rune{p2, c2, c3, c4}]
-		score += s.TQ3[[4]rune{p3, c1, c2, c3}]
-		score += s.TQ4[[4]rune{p3, c2, c3, c4}]
+		score += s.BC1[(uint32(c2)<<8)|uint32(c3)]
+		score += s.BC2[(uint32(c3)<<8)|uint32(c4)]
+		score += s.BC3[(uint32(c4)<<8)|uint32(c5)]
+		score += s.TC1[(uint32(c1)<<16)|(uint32(c2)<<8)|uint32(c3)]
+		score += s.TC2[(uint32(c2)<<16)|(uint32(c3)<<8)|uint32(c4)]
+		score += s.TC3[(uint32(c3)<<16)|(uint32(c4)<<8)|uint32(c5)]
+		score += s.TC4[(uint32(c4)<<16)|(uint32(c5)<<8)|uint32(c6)]
+		score += s.UQ1[(uint32(p1)<<8)|uint32(c1)]
+		score += s.UQ2[(uint32(p2)<<8)|uint32(c2)]
+		score += s.UQ3[(uint32(p3)<<8)|uint32(c3)]
+		score += s.BQ1[(uint32(p2)<<16)|(uint32(c2)<<8)|uint32(c3)]
+		score += s.BQ2[(uint32(p2)<<16)|(uint32(c3)<<8)|uint32(c4)]
+		score += s.BQ3[(uint32(p3)<<16)|(uint32(c2)<<8)|uint32(c3)]
+		score += s.BQ4[(uint32(p3)<<16)|(uint32(c3)<<8)|uint32(c4)]
+		score += s.TQ1[(uint32(p2)<<24)|(uint32(c1)<<16)|(uint32(c2)<<8)|uint32(c3)]
+		score += s.TQ2[(uint32(p2)<<24)|(uint32(c2)<<16)|(uint32(c3)<<8)|uint32(c4)]
+		score += s.TQ3[(uint32(p3)<<24)|(uint32(c1)<<16)|(uint32(c2)<<8)|uint32(c3)]
+		score += s.TQ4[(uint32(p3)<<24)|(uint32(c2)<<16)|(uint32(c3)<<8)|uint32(c4)]
 
 		p := 'O'
 		if score > 0 {
