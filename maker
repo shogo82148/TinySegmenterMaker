@@ -289,19 +289,77 @@ def vim(model):
 
 @language('go', 'go')
 def go(model):
-    def tostr(obj, prefix = ""):
+    def escape(key):
+        return key.replace(u"'", u"\\'")
+
+    def unigram2map(obj):
         items = []
         for key, value in obj.items():
-            if isinstance(value, dict):
-                items.append(tostr(value, key + ':'))
-            else:
-                key = key.replace('"', '\"')
-                key = '"' + prefix + key + '"'
-                items.append(key + ':' + str(value))
+            rune = u"'" + key + u"'"
+            if key in [u'B1', u'B2', u'B3', u'E1', u'E2', u'E3']:
+                rune = key
+            elif len(key) != 1:
+                continue
+            items.append(u"{0}:{1}".format(rune, value))
         items.sort()
-        return ','.join(items)
+        return u'map[rune]int{' + u','.join(items) + u'}'
+
+    def asciingram2map(obj, size):
+        items = []
+        for key, value in obj.items():
+            keyhash = 0
+            for ch in key:
+                keyhash = (keyhash << 8) | ord(ch)
+            items.append(u"0x{0:X}:{1}".format(keyhash, value))
+        items.sort()
+        return 'map[uint32]int{' + ','.join(items) + '}'
+
+    def bigram2map(obj):
+        items = []
+        for key, value in obj.items():
+            if len(key) != 2:
+                continue
+            items.append(u"0x{0:X}:{1}".format((ord(key[0]) << 32) + ord(key[1]), value))
+        items.sort()
+        return 'map[uint64]int{' + ','.join(items) + '}'
+
+    def ngram2map(obj, size):
+        items = []
+        for key, value in obj.items():
+            runes = []
+            while len(key) != 0:
+                if len(key) != size and len(key) >= 2 and key[0:2] in ['B1', 'B2', 'B3', 'E1', 'E2', 'E3']:
+                    runes.append(key[0:2])
+                    key = key[2:]
+                else:
+                    runes.append("'" + escape(key[0]) + "'")
+                    key = key[1:]
+            if len(runes) != size:
+                continue
+            items.append(u"[{0}]rune{{{1}}}:{2}".format(size, ','.join(runes), value))
+        items.sort()
+        return 'map[[' + str(size) + ']rune]int{' + ','.join(items) + '}'
+
+    model_str = u"\n\t\tBias: {0},\n".format(model['BIAS'])
+    for key in ['UP1', 'UP2', 'UP3', 'UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6']:
+        model_str += "\t\t" + key + ": " + unigram2map(model[key]) + ",\n"
+    for key in ['BP1', 'BP2', 'BC1', 'BC2', 'BC3', 'UQ1', 'UQ2', 'UQ3']:
+        model_str += "\t\t" + key + ": " + asciingram2map(model[key], 2) + ",\n"
+    for key in ['TC1', 'TC2', 'TC3', 'TC4', 'BQ1', 'BQ2', 'BQ3', 'BQ4']:
+        model_str += "\t\t" + key + ": " + asciingram2map(model[key], 3) + ",\n"
+    for key in ['TQ1', 'TQ2', 'TQ3', 'TQ4']:
+        model_str += "\t\t" + key + ": " + asciingram2map(model[key], 4) + ",\n"
+
+    for key in ['UW1', 'UW2', 'UW3', 'UW4', 'UW5', 'UW6']:
+        model_str += "\t\t" + key + ": " + unigram2map(model[key]) + ",\n"
+    for key in ['BW1', 'BW2', 'BW3']:
+        model_str += "\t\t" + key + ": " + bigram2map(model[key]) + ",\n"
+    for key in ['TW1', 'TW2', 'TW3', 'TW4']:
+        model_str += "\t\t" + key + ": " + ngram2map(model[key], 3) + ",\n"
+
+    model_str += "\t"
     template = u(open('templates/go.go').read())
-    template = template.replace(u'__MODEL__', tostr(model))
+    template = template.replace(u'__MODEL__', model_str)
     return template
 
 @language('jsx', 'jsx')
