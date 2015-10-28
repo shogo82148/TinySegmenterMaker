@@ -10,32 +10,17 @@ use utf8;
 
 our $VERSION = '0.01';
 
-my %Patterns = (
-    "[一二三四五六七八九十百千万億兆]" => "M",
-    "[一-龠々〆ヵヶ]"                  => "H",
-    "[ぁ-ん]"                          => "I",
-    "[ァ-ヴーｱ-ﾝﾞｰ]"                   => "K",
-    "[a-zA-Zａ-ｚＡ-Ｚ]"               => "A",
-    "[0-9０-９]"                       => "N",
-    );
-
-my @CharType;
-
-{
-    while (my ($key, $val) = each %Patterns) {
-        push @CharType, [qr/$key/, $val];
-    }
-}
-
 __MODEL__
 
 sub _ctype {
     my $str = shift;
-    for my $type (@CharType) {
-        if ($str =~ $type->[0]) {
-            return $type->[1];
-        }
-    }
+    return "M" if $str =~ /[一二三四五六七八九十百千万億兆]/;
+    return "H" if $str =~ /[一-龠々〆ヵヶ]/;
+    return "I" if $str =~ /[ぁ-ん]/;
+    return "K" if $str =~ /[ァ-ヴーｱ-ﾝﾞｰ]/;
+    return "A" if $str =~ /[a-zA-Zａ-ｚＡ-Ｚ]/;
+    return "N" if $str =~ /[0-9０-９]/;
+
     return "O";
 }
 
