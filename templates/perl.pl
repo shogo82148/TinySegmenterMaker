@@ -10,37 +10,18 @@ use utf8;
 
 our $VERSION = '0.01';
 
-my %Patterns = (
-    "[一二三四五六七八九十百千万億兆]" => "M",
-    "[一-龠々〆ヵヶ]"                  => "H",
-    "[ぁ-ん]"                          => "I",
-    "[ァ-ヴーｱ-ﾝﾞｰ]"                   => "K",
-    "[a-zA-Zａ-ｚＡ-Ｚ]"               => "A",
-    "[0-9０-９]"                       => "N",
-    );
-
-my @CharType;
-
-{
-    while (my ($key, $val) = each %Patterns) {
-        push @CharType, [qr/$key/, $val];
-    }
-}
-
 __MODEL__
 
 sub _ctype {
     my $str = shift;
-    for my $type (@CharType) {
-        if ($str =~ $type->[0]) {
-            return $type->[1];
-        }
-    }
-    return "O";
-}
+    return "M" if $str =~ /[一二三四五六七八九十百千万億兆]/;
+    return "H" if $str =~ /[一-龠々〆ヵヶ]/;
+    return "I" if $str =~ /[ぁ-ん]/;
+    return "K" if $str =~ /[ァ-ヴーｱ-ﾝﾞｰ]/;
+    return "A" if $str =~ /[a-zA-Zａ-ｚＡ-Ｚ]/;
+    return "N" if $str =~ /[0-9０-９]/;
 
-sub _ts {
-    $_[0] || 0;
+    return "O";
 }
 
 sub segment {
@@ -80,48 +61,48 @@ sub segment {
         my $c4 = $ctype[$i];
         my $c5 = $ctype[$i+1];
         my $c6 = $ctype[$i+2];
-        $score += _ts($UP1{$p1});
-        $score += _ts($UP2{$p2});
-        $score += _ts($UP3{$p3});
-        $score += _ts($BP1{$p1 . $p2});
-        $score += _ts($BP2{$p2 . $p3});
-        $score += _ts($UW1{$w1});
-        $score += _ts($UW2{$w2});
-        $score += _ts($UW3{$w3});
-        $score += _ts($UW4{$w4});
-        $score += _ts($UW5{$w5});
-        $score += _ts($UW6{$w6});
-        $score += _ts($BW1{$w2 . $w3});
-        $score += _ts($BW2{$w3 . $w4});
-        $score += _ts($BW3{$w4 . $w5});
-        $score += _ts($TW1{$w1 . $w2 . $w3});
-        $score += _ts($TW2{$w2 . $w3 . $w4});
-        $score += _ts($TW3{$w3 . $w4 . $w5});
-        $score += _ts($TW4{$w4 . $w5 . $w6});
-        $score += _ts($UC1{$c1});
-        $score += _ts($UC2{$c2});
-        $score += _ts($UC3{$c3});
-        $score += _ts($UC4{$c4});
-        $score += _ts($UC5{$c5});
-        $score += _ts($UC6{$c6});
-        $score += _ts($BC1{$c2 . $c3});
-        $score += _ts($BC2{$c3 . $c4});
-        $score += _ts($BC3{$c4 . $c5});
-        $score += _ts($TC1{$c1 . $c2 . $c3});
-        $score += _ts($TC2{$c2 . $c3 . $c4});
-        $score += _ts($TC3{$c3 . $c4 . $c5});
-        $score += _ts($TC4{$c4 . $c5 . $c6});
-        $score += _ts($UQ1{$p1 . $c1});
-        $score += _ts($UQ2{$p2 . $c2});
-        $score += _ts($UQ1{$p3 . $c3});
-        $score += _ts($BQ1{$p2 . $c2 . $c3});
-        $score += _ts($BQ2{$p2 . $c3 . $c4});
-        $score += _ts($BQ3{$p3 . $c2 . $c3});
-        $score += _ts($BQ4{$p3 . $c3 . $c4});
-        $score += _ts($TQ1{$p2 . $c1 . $c2 . $c3});
-        $score += _ts($TQ2{$p2 . $c2 . $c3 . $c4});
-        $score += _ts($TQ3{$p3 . $c1 . $c2 . $c3});
-        $score += _ts($TQ4{$p3 . $c2 . $c3 . $c4});
+        $score += $UP1{$p1} || 0;
+        $score += $UP2{$p2} || 0;
+        $score += $UP3{$p3} || 0;
+        $score += $BP1{$p1 . $p2} || 0;
+        $score += $BP2{$p2 . $p3} || 0;
+        $score += $UW1{$w1} || 0;
+        $score += $UW2{$w2} || 0;
+        $score += $UW3{$w3} || 0;
+        $score += $UW4{$w4} || 0;
+        $score += $UW5{$w5} || 0;
+        $score += $UW6{$w6} || 0;
+        $score += $BW1{$w2 . $w3} || 0;
+        $score += $BW2{$w3 . $w4} || 0;
+        $score += $BW3{$w4 . $w5} || 0;
+        $score += $TW1{$w1 . $w2 . $w3} || 0;
+        $score += $TW2{$w2 . $w3 . $w4} || 0;
+        $score += $TW3{$w3 . $w4 . $w5} || 0;
+        $score += $TW4{$w4 . $w5 . $w6} || 0;
+        $score += $UC1{$c1} || 0;
+        $score += $UC2{$c2} || 0;
+        $score += $UC3{$c3} || 0;
+        $score += $UC4{$c4} || 0;
+        $score += $UC5{$c5} || 0;
+        $score += $UC6{$c6} || 0;
+        $score += $BC1{$c2 . $c3} || 0;
+        $score += $BC2{$c3 . $c4} || 0;
+        $score += $BC3{$c4 . $c5} || 0;
+        $score += $TC1{$c1 . $c2 . $c3} || 0;
+        $score += $TC2{$c2 . $c3 . $c4} || 0;
+        $score += $TC3{$c3 . $c4 . $c5} || 0;
+        $score += $TC4{$c4 . $c5 . $c6} || 0;
+        $score += $UQ1{$p1 . $c1} || 0;
+        $score += $UQ2{$p2 . $c2} || 0;
+        $score += $UQ1{$p3 . $c3} || 0;
+        $score += $BQ1{$p2 . $c2 . $c3} || 0;
+        $score += $BQ2{$p2 . $c3 . $c4} || 0;
+        $score += $BQ3{$p3 . $c2 . $c3} || 0;
+        $score += $BQ4{$p3 . $c3 . $c4} || 0;
+        $score += $TQ1{$p2 . $c1 . $c2 . $c3} || 0;
+        $score += $TQ2{$p2 . $c2 . $c3 . $c4} || 0;
+        $score += $TQ3{$p3 . $c1 . $c2 . $c3} || 0;
+        $score += $TQ4{$p3 . $c2 . $c3 . $c4} || 0;
         my $p = "O";
         if ($score > 0) {
             push @result, $word;
