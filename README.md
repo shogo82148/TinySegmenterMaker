@@ -119,7 +119,8 @@ my @words = tinysegmenter->segment($str);
 
 ``` ruby
 require './tinysegmenter'
-puts TinySegmenter.segment("私の名前は中野です");
+ts = TinySegmenter.new
+puts ts.segment("私の名前は中野です");
 ```
 
 ### Python

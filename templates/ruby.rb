@@ -7,10 +7,7 @@
 # Ruby Version by Yuji Kaneda (llamerada at gmail dot com)
 # Ruby Template for TinySegmenterMaker by Ichinose Shogo <shogo82148@gmail.com>
 
-# UTF8 only
-$KCODE = "u"
-
-module TinySegmenter
+class TinySegmenter
   VERSION = 0.1
 
   module CharType
@@ -22,7 +19,7 @@ module TinySegmenter
       "[a-zA-Za-zA-Z]" => "A",
       "[0-90-9]" => "N",
     }.map{|reg, type|
-      [Regexp.compile(reg, Regexp::MULTILINE, "utf-8"), type]
+      [Regexp.compile(reg, Regexp::MULTILINE), type]
     }
     OTHER_TYPE = "O"
 
@@ -36,11 +33,10 @@ module TinySegmenter
     end
   end
 
-  module Model
-
+  class Model
     __MODEL__
 
-    def self.classify(p1, p2, p3,
+    def classify(p1, p2, p3,
                       w1, w2, w3, w4, w5, w6,
                       c1, c2, c3, c4, c5, c6)
       score = BIAS
@@ -90,7 +86,11 @@ module TinySegmenter
     end
   end
 
-  def self.segment(input)
+  def initialize
+    @model = Model.new
+  end
+
+  def segment(input)
     input = input.to_s
     return [] if input.empty?
     result = [];
@@ -106,8 +106,7 @@ module TinySegmenter
     word = seg[3]
     ps  = ["U", "U", "U"]
     4.upto(seg.length - 4) do |i|
-      score = Model.
-        classify(ps[0], ps[1], ps[2],
+      score = @model.classify(ps[0], ps[1], ps[2],
                  seg[i-3], seg[i-2], seg[i-1], seg[i], seg[i+1], seg[i+2],
                  ctype[i-3], ctype[i-2], ctype[i-1], ctype[i], ctype[i+1], ctype[i+2])
       if score > 0
