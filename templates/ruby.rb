@@ -7,9 +7,6 @@
 # Ruby Version by Yuji Kaneda (llamerada at gmail dot com)
 # Ruby Template for TinySegmenterMaker by Ichinose Shogo <shogo82148@gmail.com>
 
-# UTF8 only
-$KCODE = "u"
-
 class TinySegmenter
   VERSION = 0.1
 
@@ -22,7 +19,7 @@ class TinySegmenter
       "[a-zA-Za-zA-Z]" => "A",
       "[0-90-9]" => "N",
     }.map{|reg, type|
-      [Regexp.compile(reg, Regexp::MULTILINE, "utf-8"), type]
+      [Regexp.compile(reg, Regexp::MULTILINE), type]
     }
     OTHER_TYPE = "O"
 
