@@ -2,6 +2,11 @@
 
 set -xe
 
+# ruby
+cp ../tinysegmenter.rb ./tinysegmenter.rb
+ruby --version
+ruby benchmark.rb
+
 # cpp
 cp ../tinysegmenter.hpp ./tinysegmenter.hpp
 g++ -O3 -o benchmark benchmark.cpp
