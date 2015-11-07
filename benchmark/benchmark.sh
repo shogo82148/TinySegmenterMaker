@@ -31,3 +31,8 @@ go run benchmark.go
 cp ../tinysegmenter.py ./tinysegmenter.py
 python --version
 python benchmark.py
+
+# Julia
+cp ../tinysegmenter.jl ./tinysegmenter.jl
+julia --version
+julia benchmark.jl
