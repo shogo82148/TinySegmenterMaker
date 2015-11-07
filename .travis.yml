@@ -1,6 +1,8 @@
 language: python
+sudo: required
 python:
 - '2.7'
 - '3.3'
 - pypy
+install: ./.travis-install.sh
 script: ./test.sh && cd benchmark && ./download.sh && ./benchmark.sh
