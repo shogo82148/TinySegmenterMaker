@@ -33,6 +33,6 @@ python --version
 python benchmark.py
 
 # Julia
-cp ../tinysegmenter.jl ./tinysegmenter.jl
+cp ../tinysegmenter.jl ./TinySegmenter.jl
 julia --version
-julia benchmark.jl
+JULIA_LOAD_PATH=$PWD julia benchmark.jl
