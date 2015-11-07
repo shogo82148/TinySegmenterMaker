@@ -214,3 +214,11 @@ static void Main(string[] args)
     }
 }
 ```
+
+### Julia
+
+```jl
+using TinySegmenter
+
+tokenize("私の名前は中野です")
+```
